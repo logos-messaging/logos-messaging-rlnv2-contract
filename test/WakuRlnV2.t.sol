@@ -1010,7 +1010,7 @@ contract WakuRlnV2Test is Test {
             uint32 gracePeriodDuration,, // rateLimit
             , // index
             , // holder
-            // token
+                // token
         ) = w.memberships(100);
         vm.warp(graceStart + gracePeriodDuration + 1); // Expire one
 
@@ -1045,7 +1045,7 @@ contract WakuRlnV2Test is Test {
             , // rateLimit
             , // index
             , // holder
-            // token
+                // token
         ) = w.memberships(idCommitment1);
         vm.warp(graceStart);
         uint256[] memory toErase = new uint256[](1);
@@ -1107,7 +1107,7 @@ contract WakuRlnV2Test is Test {
             , // rateLimit
             , // index
             , // holder
-            // token
+                // token
         ) = wZeroGrace.memberships(idCommitment);
 
         // Warp just after active period
@@ -1146,7 +1146,7 @@ contract WakuRlnV2Test is Test {
             uint32 gracePeriodDuration,, // rateLimit
             , // index
             , // holder
-            // token
+                // token
         ) = w.memberships(idCommitment);
 
         vm.warp(graceStart + gracePeriodDuration + 1); // Expire
