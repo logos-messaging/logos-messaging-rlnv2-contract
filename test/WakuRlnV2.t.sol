@@ -67,6 +67,24 @@ contract NonUUPSContract {
 // A mock contract that does not support UUPS (no proxiable UUID or _authorizeUpgrade)
 }
 
+// Malicious implementation for testing upgrade risks
+// This overrides _authorizeUpgrade to allow anyone (public) and adds a drain function to steal tokens
+contract MaliciousImplementation is UUPSUpgradeable, OwnableUpgradeable {
+    // Drain all balance of a token to caller (malicious)
+    function drainTokens(address token) external {
+        IERC20(token).transfer(msg.sender, IERC20(token).balanceOf(address(this)));
+    }
+
+    // Override to allow anyone to upgrade (bypassing onlyOwner)
+    function _authorizeUpgrade(address newImplementation) internal override { }
+
+    // Placeholder initializer to match layout (but malicious could ignore)
+    function initialize() public initializer {
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+    }
+}
+
 contract WakuRlnV2Test is Test {
     WakuRlnV2 internal w;
     TestStableToken internal token;
@@ -993,7 +1011,7 @@ contract WakuRlnV2Test is Test {
             , // rateLimit
             , // index
             , // holder
-                // token
+            // token
         ) = w.memberships(100);
         vm.warp(graceStart + gracePeriodDuration + 1); // Expire one
 
@@ -1029,7 +1047,7 @@ contract WakuRlnV2Test is Test {
             , // rateLimit
             , // index
             , // holder
-                // token
+            // token
         ) = w.memberships(idCommitment1);
         vm.warp(graceStart);
         uint256[] memory toErase = new uint256[](1);
@@ -1092,7 +1110,7 @@ contract WakuRlnV2Test is Test {
             , // rateLimit
             , // index
             , // holder
-                // token
+            // token
         ) = wZeroGrace.memberships(idCommitment);
 
         // Warp just after active period
@@ -1132,7 +1150,7 @@ contract WakuRlnV2Test is Test {
             , // rateLimit
             , // index
             , // holder
-                // token
+            // token
         ) = w.memberships(idCommitment);
 
         vm.warp(graceStart + gracePeriodDuration + 1); // Expire
@@ -1541,5 +1559,29 @@ contract WakuRlnV2Test is Test {
         vm.prank(vm.addr(1));
         vm.expectRevert("Ownable: caller is not the owner");
         w.setMaxTotalRateLimit(100);
+    }
+
+    // Test: Malicious Upgrade Drains Funds
+    function test_MaliciousUpgradeDrainsFunds() external {
+        // Setup: Register with deposit
+        uint32 rateLimit = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+        token.approve(address(w), price);
+        w.register(1, rateLimit, new uint256[](0));
+
+        // Deploy malicious impl (e.g., drains token balance)
+        address maliciousImpl = address(new MaliciousImplementation()); // Assume impl with drain function
+
+        // Prank owner to upgrade
+        vm.prank(w.owner());
+        w.upgradeTo(address(maliciousImpl));
+
+        // Simulate drain (cast to malicious and call)
+        MaliciousImplementation malicious = MaliciousImplementation(address(w));
+        vm.expectRevert(); // Or assert drain fails if protected
+        malicious.drainTokens(address(token));
+
+        // Assert: Funds not drained (invariant: no direct access)
+        assertEq(token.balanceOf(address(w)), price); // Still held
     }
 }
