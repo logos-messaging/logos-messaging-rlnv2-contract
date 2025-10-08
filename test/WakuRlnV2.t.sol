@@ -1584,4 +1584,23 @@ contract WakuRlnV2Test is Test {
         // Assert: Funds not drained (invariant: no direct access)
         assertEq(token.balanceOf(address(w)), price); // Still held
     }
+
+    // Test: Demonstrate success of Unauthorized Upgrade Post-Malicious Change
+    function test_UnauthorizedUpgradeAfterMalicious() external {
+        // Deploy malicious impl that allows anyone to upgrade
+        address maliciousImpl = address(new MaliciousImplementation()); // Overrides _authorizeUpgrade to public
+
+        // Owner upgrades to malicious
+        vm.prank(w.owner());
+        w.upgradeTo(address(maliciousImpl));
+
+        // Non-owner attempts further upgrade
+        address newImpl = address(new TestStableToken()); // Arbitrary
+        vm.prank(address(0xdead));
+        w.upgradeTo(newImpl); // Should succeed if malicious allows, but test revert if protected
+
+        // Assert: Bricked or unauthorized (depending on spec; expect revert for safety)
+        vm.expectRevert("Ownable: caller is not the owner");
+        w.upgradeTo(newImpl); // If not overridden
+    }
 }
