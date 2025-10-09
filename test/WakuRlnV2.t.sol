@@ -1708,7 +1708,7 @@ contract WakuRlnV2Test is Test {
             vm.startPrank(user);
             token.approve(address(w), price);
             uint256 newId =
-                100 + uint256(keccak256(abi.encodePacked("new", reuser, block.timestamp, i))) % (w.Q() - 1) + 1; // Better
+                100 + uint256(keccak256(abi.encodePacked("new", reuser, block.timestamp, i))) % (w.Q() - 1) + 1;
             // uniqueness
             w.register(newId, rateLimit, new uint256[](0));
             vm.stopPrank();
