@@ -1603,4 +1603,131 @@ contract WakuRlnV2Test is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         w.upgradeTo(newImpl); // If not overridden
     }
+
+    // Helper: Verify Merkle Proof Manually
+    function _verifyMerkleProof(
+        uint256[20] memory proof,
+        uint256 root,
+        uint32 index,
+        uint256 leaf,
+        uint8 depth
+    )
+        internal
+        pure
+        returns (bool)
+    {
+        uint256 current = leaf;
+        uint32 idx = index;
+        for (uint8 level = 0; level < depth; level++) {
+            bool isLeft = (idx & 1) == 0;
+            uint256 sibling = proof[level];
+            uint256[2] memory inputs;
+            if (isLeft) {
+                inputs[0] = current;
+                inputs[1] = sibling;
+            } else {
+                inputs[0] = sibling;
+                inputs[1] = current;
+            }
+            current = PoseidonT3.hash(inputs);
+            idx >>= 1;
+        }
+        return current == root;
+    }
+
+    function test_OffChainProofPostLazyErase() external {
+        uint32 rateLimit = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+        token.approve(address(w), price);
+        w.register(1, rateLimit, new uint256[](0));
+        uint256 rootPre = w.root();
+        uint256[20] memory proofPre = w.getMerkleProof(0);
+        uint256 commitment = PoseidonT3.hash([1, uint256(rateLimit)]);
+
+        vm.warp(block.timestamp + w.activeDurationForNewMemberships() + w.gracePeriodDurationForNewMemberships() + 1);
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1;
+        w.eraseMemberships(ids, false); // Lazy
+
+        uint256 rootPost = w.root();
+        assertEq(rootPost, rootPre); // No change in lazy mode
+
+        // Mock off-chain: Old proof validates on old (and new) root (spam risk)
+        assertTrue(_verifyMerkleProof(proofPre, rootPre, 0, commitment, 20));
+        assertTrue(_verifyMerkleProof(proofPre, rootPost, 0, commitment, 20)); // Still valid (risk)
+        // On-chain invalid
+        (,, uint256 postCommitment) = w.getMembershipInfo(1);
+        assertEq(postCommitment, 0);
+    }
+
+    function testFuzz_MultiUserEraseReuseRace(uint8 numUsers, bool fullErase) external {
+        vm.assume(numUsers > 1 && numUsers <= 8);
+        uint32 rateLimit = w.minMembershipRateLimit();
+
+        address tokenOwner = address(tokenDeployer);
+
+        // Multi-user registers
+        for (uint8 i = 1; i <= numUsers; i++) {
+            address user = vm.addr(i);
+
+            (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+            vm.prank(tokenOwner);
+            token.mint(user, price);
+
+            vm.startPrank(user);
+            token.approve(address(w), price);
+            w.register(i, rateLimit, new uint256[](0));
+            vm.stopPrank();
+        }
+
+        vm.warp(block.timestamp + w.activeDurationForNewMemberships() + w.gracePeriodDurationForNewMemberships() + 1);
+
+        // Fuzz unique erasures
+        uint8 numErasures = uint8(uint256(keccak256(abi.encodePacked(block.timestamp))) % (numUsers / 2)) + 1;
+        uint256[] memory eraseIds = new uint256[](numErasures);
+        bool[] memory erased = new bool[](numUsers + 1); // Track to avoid duplicates
+        uint8 eraseCount = 0;
+        while (eraseCount < numErasures) {
+            uint8 eraseIdx = uint8(uint256(keccak256(abi.encodePacked(block.timestamp, eraseCount))) % numUsers) + 1;
+            if (!erased[eraseIdx]) {
+                eraseIds[eraseCount] = eraseIdx;
+                erased[eraseIdx] = true;
+                eraseCount++;
+            }
+        }
+        uint8 eraser = uint8(uint256(keccak256(abi.encodePacked(block.timestamp))) % numUsers) + 1;
+        vm.prank(vm.addr(eraser));
+        w.eraseMemberships(eraseIds, fullErase);
+
+        // Other users attempt reuses (balance to numErasures)
+        uint8 numReuses = numErasures; // Balance to no net growth
+        for (uint8 i = 0; i < numReuses; i++) {
+            uint8 reuser = uint8(uint256(keccak256(abi.encodePacked(block.timestamp, i + numUsers))) % numUsers) + 1;
+            address user = vm.addr(reuser);
+
+            (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+            vm.prank(tokenOwner);
+            token.mint(user, price);
+
+            vm.startPrank(user);
+            token.approve(address(w), price);
+            uint256 newId =
+                100 + uint256(keccak256(abi.encodePacked("new", reuser, block.timestamp, i))) % (w.Q() - 1) + 1; // Better
+            // uniqueness
+            w.register(newId, rateLimit, new uint256[](0));
+            vm.stopPrank();
+        }
+
+        // Assert: No inconsistencies, reuses correct, proofs valid
+        for (uint8 i = 1; i <= numUsers; i++) {
+            bool isErased = erased[i];
+            uint256 checkId = isErased ? 0 : i;
+            if (checkId != 0) {
+                (, uint32 idx, uint256 commitment) = w.getMembershipInfo(checkId);
+                uint256[20] memory proof = w.getMerkleProof(idx);
+                assertTrue(_verifyMerkleProof(proof, w.root(), idx, commitment, 20));
+            }
+        }
+        assertEq(w.nextFreeIndex(), numUsers); // No growth beyond (reuses fill erased)
+    }
 }
