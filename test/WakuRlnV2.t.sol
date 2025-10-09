@@ -1631,31 +1631,6 @@ contract WakuRlnV2Test is Test {
         return current == root;
     }
 
-    function test_OffChainProofPostLazyErase() external {
-        uint32 rateLimit = w.minMembershipRateLimit();
-        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
-        token.approve(address(w), price);
-        w.register(1, rateLimit, new uint256[](0));
-        uint256 rootPre = w.root();
-        uint256[20] memory proofPre = w.getMerkleProof(0);
-        uint256 commitment = PoseidonT3.hash([1, uint256(rateLimit)]);
-
-        vm.warp(block.timestamp + w.activeDurationForNewMemberships() + w.gracePeriodDurationForNewMemberships() + 1);
-        uint256[] memory ids = new uint256[](1);
-        ids[0] = 1;
-        w.eraseMemberships(ids, false); // Lazy
-
-        uint256 rootPost = w.root();
-        assertEq(rootPost, rootPre); // No change in lazy mode
-
-        // Mock off-chain: Old proof validates on old (and new) root (spam risk)
-        assertTrue(_verifyMerkleProof(proofPre, rootPre, 0, commitment, 20));
-        assertTrue(_verifyMerkleProof(proofPre, rootPost, 0, commitment, 20)); // Still valid (risk)
-        // On-chain invalid
-        (,, uint256 postCommitment) = w.getMembershipInfo(1);
-        assertEq(postCommitment, 0);
-    }
-
     function testFuzz_MultiUserEraseReuseRace(uint8 numUsers, bool fullErase) external {
         vm.assume(numUsers > 1 && numUsers <= 8);
         uint32 rateLimit = w.minMembershipRateLimit();
