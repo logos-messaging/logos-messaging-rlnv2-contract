@@ -206,8 +206,7 @@ contract TestStableTokenTest is Test {
     }
 
     function test__MintWithETH_SucceedsAtOneETH() external {
-        // Owner calling with exactly 1 ETH should succeed and mint 10^18 token units (1 wei ETH mints 1 wei token, so 1
-        // ETH mints 10^18 token units)
+        // Owner calling with exactly 1 ETH should succeed and mint 1 token (with 18 decimal places, i.e., 10^18 token units)
         uint256 sendAmount = 1 ether;
         address recipient = vm.addr(20);
 
