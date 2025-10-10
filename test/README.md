@@ -96,7 +96,8 @@ cast send $TOKEN_PROXY_ADDRESS "mint(address,uint256)" <TO_ADDRESS> <AMOUNT> --r
 
 #### Option 2: Public minting by burning ETH (no privileges required)
 
-The total tokens minted is determined by the amount of ETH sent with the transaction.
+The total tokens minted is determined by the amount of ETH sent with the transaction. There is a lower limit to the
+amount that can be minted in a single transaction to prevent spam.
 
 ```bash
 cast send $TOKEN_PROXY_ADDRESS "mintWithETH(address)" <TO_ACCOUNT> --value <ETH_AMOUNT> --rpc-url $RPC_URL --private-key $MINTING_ACCOUNT_PRIVATE_KEY --from $MINTING_ACCOUNT_ADDRESS
