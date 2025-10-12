@@ -26,6 +26,7 @@ contract TestStableToken is
 {
     mapping(address => bool) public isMinter;
     uint256 public maxSupply;
+    uint256 public constant MIN_MINT_WEI = 1 ether;
 
     event MinterAdded(address indexed account);
     event MinterRemoved(address indexed account);
@@ -71,7 +72,7 @@ contract TestStableToken is
     }
 
     function mintWithETH(address to) external payable {
-        if (msg.value == 0) revert InsufficientETH();
+        if (msg.value < MIN_MINT_WEI) revert InsufficientETH();
         if (totalSupply() + msg.value > maxSupply) revert ExceedsMaxSupply();
 
         // Burn ETH by sending to zero address
