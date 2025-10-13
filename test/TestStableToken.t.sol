@@ -195,8 +195,31 @@ contract TestStableTokenTest is Test {
         token.mintWithETH(user1);
     }
 
+    function test__MintWithETH_RevertsBelowOneETH() external {
+        // Owner calling with less than 1 ETH should revert due to minimum requirement
+        uint256 sendAmount = 0.5 ether;
+        vm.deal(owner, sendAmount);
+
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(InsufficientETH.selector));
+        token.mintWithETH{ value: sendAmount }(user1);
+    }
+
+    function test__MintWithETH_SucceedsAtOneETH() external {
+        // Owner calling with exactly 1 ETH should succeed and mint 1 token (with 18 decimal places, i.e., 10^18 token
+        // units)
+        uint256 sendAmount = 1 ether;
+        address recipient = vm.addr(20);
+
+        vm.deal(owner, sendAmount);
+        vm.prank(owner);
+        token.mintWithETH{ value: sendAmount }(recipient);
+
+        assertEq(token.balanceOf(recipient), sendAmount);
+    }
+
     function test__ERC20BasicFunctionality() external {
-        uint256 ethAmount = 0.1 ether;
+        uint256 ethAmount = 1 ether;
 
         vm.deal(user1, ethAmount);
         vm.prank(user1);
@@ -206,14 +229,14 @@ contract TestStableTokenTest is Test {
         assertEq(token.totalSupply(), ethAmount);
 
         vm.prank(user2);
-        assertTrue(token.transfer(owner, 0.05 ether));
+        assertTrue(token.transfer(owner, 0.5 ether));
 
-        assertEq(token.balanceOf(user2), 0.05 ether);
-        assertEq(token.balanceOf(owner), 0.05 ether);
+        assertEq(token.balanceOf(user2), 0.5 ether);
+        assertEq(token.balanceOf(owner), 0.5 ether);
     }
 
     function test__ETHBurnedEventEmitted() external {
-        uint256 ethAmount = 0.1 ether;
+        uint256 ethAmount = 1 ether;
 
         vm.deal(owner, ethAmount);
 
@@ -225,7 +248,7 @@ contract TestStableTokenTest is Test {
     }
 
     function test__ETHIsBurnedToZeroAddress() external {
-        uint256 ethAmount = 0.1 ether;
+        uint256 ethAmount = 1 ether;
         address zeroAddress = address(0);
 
         uint256 zeroBalanceBefore = zeroAddress.balance;
@@ -239,7 +262,7 @@ contract TestStableTokenTest is Test {
     }
 
     function test__ContractDoesNotHoldETHAfterMint() external {
-        uint256 ethAmount = 0.1 ether;
+        uint256 ethAmount = 1 ether;
 
         uint256 contractBalanceBefore = address(token).balance;
 
@@ -253,9 +276,9 @@ contract TestStableTokenTest is Test {
 
     function test__MintWithDifferentETHAmounts() external {
         uint256[] memory ethAmounts = new uint256[](3);
-        ethAmounts[0] = 0.01 ether;
-        ethAmounts[1] = 1 ether;
-        ethAmounts[2] = 10 ether;
+        ethAmounts[0] = 1 ether;
+        ethAmounts[1] = 10 ether;
+        ethAmounts[2] = 100 ether;
 
         for (uint256 i = 0; i < ethAmounts.length; i++) {
             address user = vm.addr(i + 10);
