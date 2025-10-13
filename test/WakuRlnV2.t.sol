@@ -1705,4 +1705,51 @@ contract WakuRlnV2Test is Test {
         }
         assertEq(w.nextFreeIndex(), numUsers); // No growth beyond (reuses fill erased)
     }
+
+    function testFuzz_TimestampManipulationRaces(int16 deltaOffset) external {
+        vm.assume(deltaOffset >= -15 && deltaOffset <= 15); // Miner manipulation range
+
+        uint32 rateLimit = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+        token.approve(address(w), price);
+        w.register(1, rateLimit, new uint256[](0));
+
+        // Warp to near grace end (manipulable point)
+        uint256 graceEnd =
+            block.timestamp + w.activeDurationForNewMemberships() + w.gracePeriodDurationForNewMemberships();
+
+        // Compute absolute value
+        int256 delta = int256(deltaOffset);
+        int256 absDelta = delta >= 0 ? delta : -delta;
+        uint256 offsetAbs;
+        assembly {
+            offsetAbs := absDelta
+        }
+
+        uint256 newTimestamp = delta >= 0 ? graceEnd + offsetAbs : graceEnd - offsetAbs;
+        vm.warp(newTimestamp);
+
+        // Attempt extension (race: should fail if manipulated at the end)
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1;
+        if (deltaOffset >= 0) {
+            // Manipulated at/after: expired (exclusive end)
+            vm.expectRevert(abi.encodeWithSelector(CannotExtendNonGracePeriodMembership.selector, ids[0]));
+        }
+        w.extendMemberships(ids);
+
+        // Attempt erase (race: should succeed if at/after, fail if before)
+        if (deltaOffset < 0) {
+            // Manipulated before: not expired
+            vm.expectRevert(abi.encodeWithSelector(CannotEraseActiveMembership.selector, ids[0]));
+        }
+        w.eraseMemberships(ids, true);
+
+        // Assert states based on manipulation
+        if (deltaOffset >= 0) {
+            assertTrue(w.isExpired(1));
+        } else {
+            assertFalse(w.isExpired(1));
+        }
+    }
 }
