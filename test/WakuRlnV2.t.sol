@@ -1631,7 +1631,7 @@ contract WakuRlnV2Test is Test {
         return current == root;
     }
 
-    function testFuzz_MultiUserEraseReuseRace(uint8 numUsers, bool fullErase) external {
+    function test_MultiUserEraseReuseRace(uint8 numUsers, bool fullErase) external {
         vm.assume(numUsers > 1 && numUsers <= 8);
         uint32 rateLimit = w.minMembershipRateLimit();
 
@@ -1702,7 +1702,7 @@ contract WakuRlnV2Test is Test {
         assertEq(w.nextFreeIndex(), numUsers); // No growth beyond (reuses fill erased)
     }
 
-    function testFuzz_TimestampManipulationRaces(int16 deltaOffset) external {
+    function test_TimestampManipulationRaces(int16 deltaOffset) external {
         vm.assume(deltaOffset >= -15 && deltaOffset <= 15); // Miner manipulation range
 
         uint32 rateLimit = w.minMembershipRateLimit();
