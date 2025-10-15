@@ -1752,4 +1752,45 @@ contract WakuRlnV2Test is Test {
             assertFalse(w.isExpired(1));
         }
     }
+
+    function testFrontrunning_RegistrationRevertsForVictim() external {
+        // Setup: Two users, Alice (victim) and Bob (attacker)
+        address alice = makeAddr("alice");
+        address bob = makeAddr("bob");
+
+        // Mint and approve tokens for both (assuming min rate limit requires 1e18 tokens)
+        uint32 rateLimit = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+        vm.prank(address(tokenDeployer));
+        token.mint(alice, price);
+        vm.prank(address(tokenDeployer));
+        token.mint(bob, price);
+
+        vm.prank(alice);
+        token.approve(address(w), price);
+        vm.prank(bob);
+        token.approve(address(w), price);
+
+        // Alice's intended idCommitment
+        uint256 idCommitment = 123; // Arbitrary valid commitment (1 < id < Q)
+
+        // Simulate frontrun: Prank Bob to register first with Alice's idCommitment
+        vm.prank(bob);
+        w.register(idCommitment, rateLimit, new uint256[](0));
+
+        // Now prank Alice: Her registration should succeed if no frontrun, but since it was frontrun, this will revert
+        // and fail the test
+        vm.prank(alice);
+        w.register(idCommitment, rateLimit, new uint256[](0));
+
+        // Assertions: If we reach here (no revert), check Alice owns it—but since revert happens, test fails
+        (uint32 fetchedRateLimit, uint32 index, uint256 rateCommitment) = w.getMembershipInfo(idCommitment);
+        assertEq(fetchedRateLimit, rateLimit);
+
+        // Destructure to access holder
+        (,,,,,, address holder,) = w.memberships(idCommitment);
+        assertEq(holder, alice); // This would fail if Bob sniped, but test already fails on revert
+
+        assertFalse(w.isInMembershipSet(456)); // Arbitrary other ID for Alice not registered
+    }
 }
