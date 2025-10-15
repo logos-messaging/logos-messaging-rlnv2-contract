@@ -1789,4 +1789,50 @@ contract WakuRlnV2Test is Test {
 
         assertFalse(w.isInMembershipSet(456)); // Arbitrary other ID for Alice not registered
     }
+
+    function testFrontrunning_SetFillingSpam() external {
+        // Prank owner to adjust limits for test
+        uint32 rateLimit = w.minMembershipRateLimit(); // Assume 20
+        vm.prank(w.owner());
+        w.setMaxMembershipRateLimit(rateLimit); // e.g., 20
+        vm.prank(w.owner());
+        w.setMaxTotalRateLimit(rateLimit * 2); // e.g., 40, for 2 memberships
+
+        // Setup attacker and victim
+        address bob = makeAddr("bob"); // Attacker
+        address alice = makeAddr("alice"); // Victim
+
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+
+        // Mint and approve for Bob and Alice
+        vm.prank(address(tokenDeployer));
+        token.mint(bob, price * 2); // Enough for two registrations
+        vm.prank(address(tokenDeployer));
+        token.mint(alice, price);
+
+        vm.prank(bob);
+        token.approve(address(w), price * 2);
+        vm.prank(alice);
+        token.approve(address(w), price);
+
+        // Bob registers one junk to make it almost full
+        uint256 junkId = 789; // Valid ID
+        vm.prank(bob);
+        w.register(junkId, rateLimit, new uint256[](0));
+
+        // Alice's intended idCommitment
+        uint256 aliceId = 123;
+
+        // Frontrun: Bob snipes the last capacity with Alice's idCommitment
+        vm.prank(bob);
+        w.register(aliceId, rateLimit, new uint256[](0));
+
+        // Alice tries to register a different ID but capacity is exceeded (no expectRevert, so test fails on revert)
+        vm.prank(alice);
+        w.register(456, rateLimit, new uint256[](0)); // Different ID, but full capacity
+
+        // Assertions: If no revert (which won't happen), check Alice owns it—but test fails earlier
+        (,,,,,, address holder,) = w.memberships(456);
+        assertEq(holder, alice); // This would fail if capacity exceeded, but revert happens first
+    }
 }
