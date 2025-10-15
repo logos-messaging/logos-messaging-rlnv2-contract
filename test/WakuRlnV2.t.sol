@@ -1780,7 +1780,7 @@ contract WakuRlnV2Test is Test {
         w.register(idCommitment, rateLimit, new uint256[](0));
 
         // Assertions: If we reach here (no revert), check Alice owns it—but since revert happens, test fails
-        (uint32 fetchedRateLimit, uint32 index, uint256 rateCommitment) = w.getMembershipInfo(idCommitment);
+        (uint32 fetchedRateLimit,,) = w.getMembershipInfo(idCommitment);
         assertEq(fetchedRateLimit, rateLimit);
 
         // Destructure to access holder
