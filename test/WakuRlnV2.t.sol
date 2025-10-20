@@ -64,8 +64,9 @@ contract MockPriceCalculator is IPriceCalculator {
 }
 
 contract NonUUPSContract {
-// A mock contract that does not support UUPS (no proxiable UUID or _authorizeUpgrade)
-}
+    // A mock contract that does not support UUPS (no proxiable UUID or _authorizeUpgrade)
+
+    }
 
 contract WakuRlnV2Test is Test {
     WakuRlnV2 internal w;
@@ -911,8 +912,7 @@ contract WakuRlnV2Test is Test {
         w.register(idCommitment, rateLimit, noIdCommitmentsToErase);
 
         // Destructure the memberships mapping tuple, skipping unused fields
-        (
-            , // depositAmount
+        (, // depositAmount
             uint32 activeDuration,
             uint256 gracePeriodStart,
             uint32 gracePeriodDuration,
@@ -989,8 +989,7 @@ contract WakuRlnV2Test is Test {
             , // depositAmount
             , // activeDuration
             uint256 graceStart,
-            uint32 gracePeriodDuration,
-            , // rateLimit
+            uint32 gracePeriodDuration,, // rateLimit
             , // index
             , // holder
                 // token
@@ -1024,8 +1023,7 @@ contract WakuRlnV2Test is Test {
         (
             , // depositAmount
             , // activeDuration
-            uint256 graceStart,
-            , // gracePeriodDuration
+            uint256 graceStart,, // gracePeriodDuration
             , // rateLimit
             , // index
             , // holder
@@ -1087,8 +1085,7 @@ contract WakuRlnV2Test is Test {
         (
             , // depositAmount
             , // activeDuration
-            uint256 gracePeriodStart,
-            , // gracePeriodDuration
+            uint256 gracePeriodStart,, // gracePeriodDuration
             , // rateLimit
             , // index
             , // holder
@@ -1128,8 +1125,7 @@ contract WakuRlnV2Test is Test {
             , // depositAmount
             , // activeDuration
             uint256 graceStart,
-            uint32 gracePeriodDuration,
-            , // rateLimit
+            uint32 gracePeriodDuration,, // rateLimit
             , // index
             , // holder
                 // token
