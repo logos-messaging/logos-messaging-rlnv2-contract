@@ -68,24 +68,6 @@ contract NonUUPSContract {
 
     }
 
-// Malicious implementation for testing upgrade risks
-// This overrides _authorizeUpgrade to allow anyone (public) and adds a drain function to steal tokens
-contract MaliciousImplementation is UUPSUpgradeable, OwnableUpgradeable {
-    // Drain all balance of a token to caller (malicious)
-    function drainTokens(address token) external {
-        IERC20(token).transfer(msg.sender, IERC20(token).balanceOf(address(this)));
-    }
-
-    // Override to allow anyone to upgrade (bypassing onlyOwner)
-    function _authorizeUpgrade(address newImplementation) internal override { }
-
-    // Placeholder initializer to match layout (but malicious could ignore)
-    function initialize() public initializer {
-        __Ownable_init();
-        __UUPSUpgradeable_init();
-    }
-}
-
 contract WakuRlnV2Test is Test {
     WakuRlnV2 internal w;
     TestStableToken internal token;
