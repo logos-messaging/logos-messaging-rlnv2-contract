@@ -30,12 +30,6 @@ contract EchidnaTest {
     }
 
     function testEraseAndReuse(uint32 _numUsers, bool fullErase, uint32 rateLimit) public {
-        require(_numUsers > 1 && _numUsers <= 256, "numUsers out of range");
-        require(
-            w.minMembershipRateLimit() <= rateLimit && rateLimit <= w.maxMembershipRateLimit() / _numUsers,
-            "rateLimit out of range"
-        );
-
         numUsers = _numUsers;
 
         // Multi-user registers
