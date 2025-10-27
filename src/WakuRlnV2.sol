@@ -28,6 +28,8 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
     /// @notice The depth of the Merkle tree that stores rate commitments of memberships
     uint8 public constant MERKLE_TREE_DEPTH = 20;
 
+    uint8 public constant HISTORY_SIZE = 5;
+
     /// @notice The maximum membership set size is the size of the Merkle tree (2 ^ depth)
     uint32 public MAX_MEMBERSHIP_SET_SIZE;
 
@@ -36,6 +38,11 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
 
     /// @notice The Merkle tree that stores rate commitments of memberships
     LazyIMTData public merkleTree;
+
+    // Fixed-size circular buffer for recent roots
+    uint256[HISTORY_SIZE] private recentRoots;
+    uint8 private rootIndex; // points to the next slot to overwrite
+    bool private initialized; // track first initialization
 
     /// @notice Сheck if the idCommitment is valid
     /// @param idCommitment The idCommitment of the membership
@@ -178,6 +185,42 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
         emit MembershipRegistered(idCommitment, rateLimit, index);
     }
 
+    /// @notice Adds a new root to the history (called after tree update)
+    function _storeNewRoot(uint256 newRoot) internal {
+        // Initialize buffer on first call
+        if (!initialized) {
+            recentRoots[0] = newRoot;
+            rootIndex = 1;
+            initialized = true;
+        } else {
+            recentRoots[rootIndex] = newRoot;
+            rootIndex = (rootIndex + 1) % HISTORY_SIZE;
+        }
+    }
+
+    /// @notice Returns the list of recent roots, newest first
+    function getRecentRoots() external view returns (uint256[HISTORY_SIZE] memory ordered) {
+        if (!initialized) {
+            return ordered; // empty array if no roots yet
+        }
+
+        uint8 index = rootIndex;
+        for (uint8 i = 0; i < HISTORY_SIZE; i++) {
+            // Traverse backwards from most recent
+            uint8 idx = (index + HISTORY_SIZE - 1 - i) % HISTORY_SIZE;
+            ordered[i] = recentRoots[idx];
+        }
+    }
+
+    /// @notice Get the root at a specific position (0 = newest)
+    function getRootAt(uint8 position) external view returns (uint256) {
+        require(position < HISTORY_SIZE, "Out of range");
+        require(initialized, "No roots yet");
+
+        uint8 index = (rootIndex + HISTORY_SIZE - 1 - position) % HISTORY_SIZE;
+        return recentRoots[index];
+    }
+
     /// @dev Register a membership (internal function)
     /// @param idCommitment The idCommitment of the membership
     /// @param rateLimit The rate limit of the membership
@@ -189,6 +232,10 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
             LazyIMT.insert(merkleTree, rateCommitment);
             nextFreeIndex += 1;
         }
+
+        // ✅ After updating or inserting, capture and store the new root
+        uint256 newRoot = LazyIMT.root(merkleTree, MERKLE_TREE_DEPTH);
+        _storeNewRoot(newRoot);
     }
 
     /// @notice Returns the root of the Merkle tree that stores rate commitments of memberships
