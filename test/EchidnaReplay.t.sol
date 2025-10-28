@@ -1,4 +1,4 @@
-pragma solidity ^0.8.13;
+pragma solidity 0.8.24;
 
 // Initial test replay generated from Echidna log at https://getrecon.xyz/tools/echidna
 // Assume EchidnaTest.sol is the Echidna harness contract that defines the methods like registerMembership,
@@ -270,403 +270,269 @@ contract EchidnaReplay is Test {
     }
 
     function test_attemptExtensionRace_WakuRLN() public {
-        vm.roll(block.number + 59_109);
-        vm.warp(block.timestamp + 12_682_314);
+        vm.roll(block.number + 59109);
+        vm.warp(block.timestamp + 12682314);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptErasureRace(
-            115_710_044_366_489_380_560_145_754_182_836_127_776_606_905_958_965_281_515_627_230_965_944_185_828_197,
-            true
-        );
-        vm.roll(block.number + 35_655);
-        vm.warp(block.timestamp + 15_576_565);
+        attemptErasureRace(115710044366489380560145754182836127776606905958965281515627230965944185828197, true);
+        vm.roll(block.number + 35655);
+        vm.warp(block.timestamp + 15576565);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            12_439_145_154_143_552_525_910_919_713_868_996_066_330_922_688_700_283_373_718_845_930_110_014_852_748,
-            4_008_408
-        );
+        registerMembership(12439145154143552525910919713868996066330922688700283373718845930110014852748, 100);
         vm.roll(block.number + 5763);
-        vm.warp(block.timestamp + 6_585_509);
+        vm.warp(block.timestamp + 6585509);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            17_390_757_134_860_691_103_601_339_956_017_953_267_743_470_484_370_144_179_061_550_943_820_859_938_352,
-            false
-        );
-        vm.roll(block.number + 24_311);
-        vm.warp(block.timestamp + 12_762_680);
+        attemptErasureRace(17390757134860691103601339956017953267743470484370144179061550943820859938352, false);
+        vm.roll(block.number + 24311);
+        vm.warp(block.timestamp + 12762680);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.registerMembership(30_550_828_421_328_047_254_873_089_071_721_340, 254_212_081);
-        vm.roll(block.number + 12_819);
-        vm.warp(block.timestamp + 1_649_692);
+        registerMembership(30550828421328047254873089071721340, 100);
+        vm.roll(block.number + 12819);
+        vm.warp(block.timestamp + 1649692);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(
-            104_850_126_800_538_479_521_627_521_813_512_576_589_921_885_869_622_125_078_501_950_362_797_396_775_732
-        );
-        vm.roll(block.number + 45_108);
-        vm.warp(block.timestamp + 1_956_666);
+        attemptExtensionRace(104850126800538479521627521813512576589921885869622125078501950362797396775732);
+        vm.roll(block.number + 45108);
+        vm.warp(block.timestamp + 1956666);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            34_886_597_912_158_088_398_731_931_734_494_950_295_345_955_711_258_232_465_783_822_303_829_418_980_034,
-            1_220_362_828
-        );
-        vm.roll(block.number + 53_007);
-        vm.warp(block.timestamp + 276_592);
+        registerMembership(34886597912158088398731931734494950295345955711258232465783822303829418980034, 100);
+        vm.roll(block.number + 53007);
+        vm.warp(block.timestamp + 276592);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(834);
-        vm.roll(block.number + 25_848);
-        vm.warp(block.timestamp + 11_362_065);
+        attemptExtensionRace(834);
+        vm.roll(block.number + 25848);
+        vm.warp(block.timestamp + 11362065);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            39_174_465_178_587_396_508_459_477_969_368_571_131_696_829_920_441_112_535_821_186_895_419_294_115_835, 67
-        );
-        vm.roll(block.number + 33_171);
-        vm.warp(block.timestamp + 383_675);
+        registerMembership(39174465178587396508459477969368571131696829920441112535821186895419294115835, 100);
+        vm.roll(block.number + 33171);
+        vm.warp(block.timestamp + 383675);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(
-            7_022_159_125_197_495_734_384_997_711_896_547_675_021_391_130_223_237_843_255_817_587_255_104_160_363
-        );
-        vm.roll(block.number + 15_676);
-        vm.warp(block.timestamp + 11_735_351);
+        attemptExtensionRace(7022159125197495734384997711896547675021391130223237843255817587255104160363);
+        vm.roll(block.number + 15676);
+        vm.warp(block.timestamp + 11735351);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptExtensionRace(
-            101_185_480_181_713_116_242_457_669_701_483_883_593_620_024_991_591_651_269_453_671_853_652_437_478_102
-        );
-        vm.roll(block.number + 44_384);
-        vm.warp(block.timestamp + 18_346_179);
+        attemptExtensionRace(101185480181713116242457669701483883593620024991591651269453671853652437478102);
+        vm.roll(block.number + 44384);
+        vm.warp(block.timestamp + 18346179);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            4_908_416_131_442_887_573_991_189_028_182_614_782_884_545_304_889_259_793_974_797_565_686_968_097_292,
-            4_294_967_292
-        );
-        vm.roll(block.number + 16_801);
-        vm.warp(block.timestamp + 573_740);
+        registerMembership(4908416131442887573991189028182614782884545304889259793974797565686968097292, 100);
+        vm.roll(block.number + 16801);
+        vm.warp(block.timestamp + 573740);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_933,
-            2_618_654_355
-        );
-        vm.roll(block.number + 35_654);
-        vm.warp(block.timestamp + 4_068_035);
+        registerMembership(115792089237316195423570985008687907853269984665640564039457584007913129639933, 100);
+        vm.roll(block.number + 35654);
+        vm.warp(block.timestamp + 4068035);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptExtensionRace(
-            18_978_082_967_849_498_068_717_608_127_246_258_727_629_855_559_346_799_025_101_476_822_814_831_852_169
-        );
-        vm.roll(block.number + 30_101);
-        vm.warp(block.timestamp + 4_745_968);
+        attemptExtensionRace(18978082967849498068717608127246258727629855559346799025101476822814831852169);
+        vm.roll(block.number + 30101);
+        vm.warp(block.timestamp + 4745968);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptExtensionRace(6_106_105_733_994_696_914_590_284_712_692);
+        attemptExtensionRace(6106105733994696914590284712692);
         vm.roll(block.number + 6700);
-        vm.warp(block.timestamp + 14_763_861);
+        vm.warp(block.timestamp + 14763861);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptExtensionRace(
-            104_237_522_040_539_086_529_385_814_200_395_911_913_667_236_478_153_241_258_910_237_150_016_100_933_281
-        );
-        vm.roll(block.number + 52_780);
-        vm.warp(block.timestamp + 16_427_024);
+        attemptExtensionRace(104237522040539086529385814200395911913667236478153241258910237150016100933281);
+        vm.roll(block.number + 52780);
+        vm.warp(block.timestamp + 16427024);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            8_555_773_188_090_352_132_903_209_190_922_658_630_799_967_488_207_010_664_039_959_647_283_030_053_950,
-            460_580_227
-        );
-        vm.roll(block.number + 36_392);
-        vm.warp(block.timestamp + 11_470_167);
+        registerMembership(8555773188090352132903209190922658630799967488207010664039959647283030053950, 100);
+        vm.roll(block.number + 36392);
+        vm.warp(block.timestamp + 11470167);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptErasureRace(
-            9_394_776_414_966_240_069_580_838_672_673_694_685_292_165_040_808_226_440_647_796_406_499_139_370_962, true
-        );
-        vm.roll(block.number + 13_355);
-        vm.warp(block.timestamp + 16_427_025);
+        attemptErasureRace(9394776414966240069580838672673694685292165040808226440647796406499139370962, true);
+        vm.roll(block.number + 13355);
+        vm.warp(block.timestamp + 16427025);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptErasureRace(
-            9_630_707_582_521_938_235_113_899_367_442_877_106_957_117_302_212_260_601_089_037_887_382_200_262_601, false
-        );
-        vm.roll(block.number + 22_867);
-        vm.warp(block.timestamp + 159_999);
+        attemptErasureRace(9630707582521938235113899367442877106957117302212260601089037887382200262601, false);
+        vm.roll(block.number + 22867);
+        vm.warp(block.timestamp + 159999);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(
-            28_243_736_643_972_833_793_366_231_626_843_204_992_644_487_197_555_289_924_254_482_104_591_589_940_922
-        );
-        vm.roll(block.number + 22_820);
-        vm.warp(block.timestamp + 4_779_059);
+        attemptExtensionRace(28243736643972833793366231626843204992644487197555289924254482104591589940922);
+        vm.roll(block.number + 22820);
+        vm.warp(block.timestamp + 4779059);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.registerMembership(
-            19_201_590_924_623_513_311_141_753_466_125_212_569_043_677_014_481_753_075_022_686_585_593_991_810_749,
-            3_248_505_270
-        );
-        vm.roll(block.number + 35_266);
-        vm.warp(block.timestamp + 3_182_076);
+        registerMembership(19201590924623513311141753466125212569043677014481753075022686585593991810749, 100);
+        vm.roll(block.number + 35266);
+        vm.warp(block.timestamp + 3182076);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptExtensionRace(
-            43_827_548_018_134_037_042_906_582_304_483_527_074_537_881_763_084_930_140_765_111_011_615_661_349_666
-        );
-        vm.roll(block.number + 19_490);
-        vm.warp(block.timestamp + 299_200);
+        attemptExtensionRace(43827548018134037042906582304483527074537881763084930140765111011615661349666);
+        vm.roll(block.number + 19490);
+        vm.warp(block.timestamp + 299200);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(
-            12_776_298_811_140_222_029_408_960_445_729_157_525_018_582_422_120_161_448_937_390_282_915_768_616_624
-        );
-        vm.roll(block.number + 51_788);
-        vm.warp(block.timestamp + 18_651_487);
+        attemptExtensionRace(12776298811140222029408960445729157525018582422120161448937390282915768616624);
+        vm.roll(block.number + 51788);
+        vm.warp(block.timestamp + 18651487);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptErasureRace(
-            107_301_127_263_897_597_227_628_761_122_806_603_306_606_929_334_009_477_725_205_515_511_615_612_118_148,
-            true
-        );
-        vm.roll(block.number + 49_348);
-        vm.warp(block.timestamp + 12_337_026);
+        attemptErasureRace(107301127263897597227628761122806603306606929334009477725205515511615612118148, true);
+        vm.roll(block.number + 49348);
+        vm.warp(block.timestamp + 12337026);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            14_744_269_619_966_411_208_579_211_824_598_458_697_587_494_354_926_760_081_771_325_075_741_142_829_158,
-            588_873
-        );
-        vm.roll(block.number + 49_829);
-        vm.warp(block.timestamp + 12_713_084);
+        registerMembership(14744269619966411208579211824598458697587494354926760081771325075741142829158, 100);
+        vm.roll(block.number + 49829);
+        vm.warp(block.timestamp + 12713084);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(
-            43_792_367_251_478_649_051_155_053_078_982_380_795_888_842_184_379_994_324_460_592_762_045_082_390_946
-        );
+        attemptExtensionRace(43792367251478649051155053078982380795888842184379994324460592762045082390946);
         vm.roll(block.number + 7659);
-        vm.warp(block.timestamp + 14_763_856);
+        vm.warp(block.timestamp + 14763856);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(828, true);
-        vm.roll(block.number + 36_651);
-        vm.warp(block.timestamp + 4_476_578);
+        attemptErasureRace(828, true);
+        vm.roll(block.number + 36651);
+        vm.warp(block.timestamp + 4476578);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            115_046_885_519_045_122_606_446_282_744_980_637_739_795_881_293_862_923_481_580_204_068_197_516_138_270,
-            false
-        );
-        vm.roll(block.number + 41_972);
-        vm.warp(block.timestamp + 15_765_194);
+        attemptErasureRace(115046885519045122606446282744980637739795881293862923481580204068197516138270, false);
+        vm.roll(block.number + 41972);
+        vm.warp(block.timestamp + 15765194);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptErasureRace(
-            7_171_889_270_225_471_948_987_523_104_033_632_910_444_398_328_090_760_036_609_063_776_968_837_717_794, true
-        );
-        vm.roll(block.number + 12_338);
-        vm.warp(block.timestamp + 16_542_398);
+        attemptErasureRace(7171889270225471948987523104033632910444398328090760036609063776968837717794, true);
+        vm.roll(block.number + 12338);
+        vm.warp(block.timestamp + 16542398);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.registerMembership(
-            36_820_031_792_293_339_223_546_668_816_467_201_710_704_202_917_197_104_615_399_587_045_614_220_405_399,
-            1_371_460_610
-        );
-        vm.roll(block.number + 21_241);
-        vm.warp(block.timestamp + 1_018_641);
+        registerMembership(36820031792293339223546668816467201710704202917197104615399587045614220405399, 100);
+        vm.roll(block.number + 21241);
+        vm.warp(block.timestamp + 1018641);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.registerMembership(
-            77_752_533_705_984_083_621_774_514_325_091_611_770_137_972_395_322_818_578_120_871_980_142_243_088_871, 12
-        );
-        vm.roll(block.number + 19_489);
-        vm.warp(block.timestamp + 2_368_987);
+        registerMembership(77752533705984083621774514325091611770137972395322818578120871980142243088871, 100); // Updated to 100 for consistency
+        vm.roll(block.number + 19489);
+        vm.warp(block.timestamp + 2368987);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.registerMembership(
-            4_014_188_762_916_583_598_888_942_667_424_965_430_287_497_824_629_657_219_807_941_460_227_372_577_779, 658
-        );
-        vm.roll(block.number + 50_607);
-        vm.warp(block.timestamp + 6_275_598);
+        registerMembership(4014188762916583598888942667424965430287497824629657219807941460227372577779, 100); // Updated
+        vm.roll(block.number + 50607);
+        vm.warp(block.timestamp + 6275598);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptExtensionRace(
-            25_686_798_737_320_918_646_636_587_445_932_741_319_837_891_759_549_806_387_798_392_338_795_533_488_010
-        );
-        vm.roll(block.number + 32_528);
-        vm.warp(block.timestamp + 11_364_405);
+        attemptExtensionRace(25686798737320918646636587445932741319837891759549806387798392338795533488010);
+        vm.roll(block.number + 32528);
+        vm.warp(block.timestamp + 11364405);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.registerMembership(
-            53_991_267_514_590_793_278_297_355_948_559_624_755_148_862_080_273_380_827_299_810_595_369_156_972_613,
-            298_004_188
-        );
-        vm.roll(block.number + 34_897);
-        vm.warp(block.timestamp + 7_243_908);
+        registerMembership(53991267514590793278297355948559624755148862080273380827299810595369156972613, 100);
+        vm.roll(block.number + 34897);
+        vm.warp(block.timestamp + 7243908);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptErasureRace(
-            14_593_453_114_436_356_872_569_019_099_482_380_600_010_961_031_449_147_888_385_564_231_161_572_479_533,
-            false
-        );
-        vm.roll(block.number + 32_012);
-        vm.warp(block.timestamp + 4_454_946);
+        attemptErasureRace(14593453114436356872569019099482380600010961031449147888385564231161572479533, false);
+        vm.roll(block.number + 32012);
+        vm.warp(block.timestamp + 4454946);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(
-            25_925_918_697_093_082_051_988_700_719_536_417_857_215_502_310_699_420_143_298_508_813_462_032_862_395
-        );
-        vm.roll(block.number + 28_697);
-        vm.warp(block.timestamp + 15_970_432);
+        attemptExtensionRace(25925918697093082051988700719536417857215502310699420143298508813462032862395);
+        vm.roll(block.number + 28697);
+        vm.warp(block.timestamp + 15970432);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.registerMembership(
-            108_479_333_139_474_050_100_903_533_488_798_991_877_708_572_455_902_122_277_366_214_901_308_705_838_858,
-            1_217_392_366
-        );
-        vm.roll(block.number + 14_898);
-        vm.warp(block.timestamp + 4_838_522);
+        registerMembership(108479333139474050100903533488798991877708572455902122277366214901308705838858, 100);
+        vm.roll(block.number + 14898);
+        vm.warp(block.timestamp + 4838522);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptErasureRace(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_932,
-            false
-        );
-        vm.roll(block.number + 19_847);
-        vm.warp(block.timestamp + 14_942_829);
+        attemptErasureRace(115792089237316195423570985008687907853269984665640564039457584007913129639932, false);
+        vm.roll(block.number + 19847);
+        vm.warp(block.timestamp + 14942829);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptErasureRace(
-            70_301_009_613_960_490_917_949_744_526_391_086_498_442_689_163_222_427_992_725_693_722_994_258_137_973,
-            false
-        );
-        vm.roll(block.number + 12_155);
-        vm.warp(block.timestamp + 14_219_479);
+        attemptErasureRace(70301009613960490917949744526391086498442689163222427992725693722994258137973, false);
+        vm.roll(block.number + 12155);
+        vm.warp(block.timestamp + 14219479);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(
-            76_966_217_218_353_830_958_442_135_212_923_621_112_975_360_884_156_253_028_656_115_159_618_856_313_417
-        );
+        attemptExtensionRace(76966217218353830958442135212923621112975360884156253028656115159618856313417);
         vm.roll(block.number + 9758);
-        vm.warp(block.timestamp + 287_808);
+        vm.warp(block.timestamp + 287808);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptErasureRace(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_933,
-            true
-        );
-        vm.roll(block.number + 34_448);
-        vm.warp(block.timestamp + 7_211_969);
+        attemptErasureRace(115792089237316195423570985008687907853269984665640564039457584007913129639933, true);
+        vm.roll(block.number + 34448);
+        vm.warp(block.timestamp + 7211969);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_912,
-            false
-        );
-        vm.roll(block.number + 16_001);
-        vm.warp(block.timestamp + 18_874_761);
+        attemptErasureRace(115792089237316195423570985008687907853269984665640564039457584007913129639912, false);
+        vm.roll(block.number + 16001);
+        vm.warp(block.timestamp + 18874761);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_931,
-            true
-        );
-        vm.roll(block.number + 37_485);
-        vm.warp(block.timestamp + 11_975_371);
+        attemptErasureRace(115792089237316195423570985008687907853269984665640564039457584007913129639931, true);
+        vm.roll(block.number + 37485);
+        vm.warp(block.timestamp + 11975371);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptExtensionRace(
-            37_335_511_784_273_848_537_689_431_468_682_439_708_817_559_909_961_396_759_913_669_152_336_630_041_800
-        );
-        vm.roll(block.number + 52_321);
-        vm.warp(block.timestamp + 18_466_804);
+        attemptExtensionRace(37335511784273848537689431468682439708817559909961396759913669152336630041800);
+        vm.roll(block.number + 52321);
+        vm.warp(block.timestamp + 18466804);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptErasureRace(477, false);
-        vm.roll(block.number + 31_665);
-        vm.warp(block.timestamp + 373_007);
+        attemptErasureRace(477, false);
+        vm.roll(block.number + 31665);
+        vm.warp(block.timestamp + 373007);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.registerMembership(
-            82_544_183_440_599_290_253_901_529_097_973_022_858_563_960_899_075_426_055_988_440_093_036_240_231_550, 27
-        );
-        vm.roll(block.number + 45_111);
-        vm.warp(block.timestamp + 15_500_872);
+        registerMembership(82544183440599290253901529097973022858563960899075426055988440093036240231550, 100);
+        vm.roll(block.number + 45111);
+        vm.warp(block.timestamp + 15500872);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptExtensionRace(
-            105_606_550_632_292_314_621_503_518_143_649_535_828_775_273_028_210_522_109_286_717_639_175_153_183_420
-        );
-        vm.roll(block.number + 36_506);
-        vm.warp(block.timestamp + 7_414_210);
+        attemptExtensionRace(105606550632292314621503518143649535828775273028210522109286717639175153183420);
+        vm.roll(block.number + 36506);
+        vm.warp(block.timestamp + 7414210);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(161, 607_795_364);
-        vm.roll(block.number + 56_897);
-        vm.warp(block.timestamp + 12_441_897);
+        registerMembership(161, 100);
+        vm.roll(block.number + 56897);
+        vm.warp(block.timestamp + 12441897);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptErasureRace(
-            111_398_094_352_181_033_884_768_016_817_884_715_635_237_389_508_840_493_420_231_528_590_208_237_700_862,
-            false
-        );
+        attemptErasureRace(111398094352181033884768016817884715635237389508840493420231528590208237700862, false);
         vm.roll(block.number + 8898);
-        vm.warp(block.timestamp + 16_471_434);
+        vm.warp(block.timestamp + 16471434);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(
-            105_337_060_722_689_913_614_253_553_269_990_692_457_515_092_424_074_600_138_749_804_416_711_343_223_382
-        );
+        attemptExtensionRace(105337060722689913614253553269990692457515092424074600138749804416711343223382);
         vm.roll(block.number + 5723);
-        vm.warp(block.timestamp + 1_922_225);
+        vm.warp(block.timestamp + 1922225);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptExtensionRace(
-            18_872_386_506_188_900_128_178_593_638_530_871_606_212_752_948_544_745_205_989_878_007_158_625_800_496
-        );
-        vm.roll(block.number + 15_232);
-        vm.warp(block.timestamp + 6_674_678);
+        attemptExtensionRace(18872386506188900128178593638530871606212752948544745205989878007158625800496);
+        vm.roll(block.number + 15232);
+        vm.warp(block.timestamp + 6674678);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptExtensionRace(4_009_354_985_947_816_657_442_120_275_607);
-        vm.roll(block.number + 48_756);
-        vm.warp(block.timestamp + 10_087_875);
+        attemptExtensionRace(4009354985947816657442120275607);
+        vm.roll(block.number + 48756);
+        vm.warp(block.timestamp + 10087875);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(69);
-        vm.roll(block.number + 38_102);
-        vm.warp(block.timestamp + 15_788_002);
+        attemptExtensionRace(69);
+        vm.roll(block.number + 38102);
+        vm.warp(block.timestamp + 15788002);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.registerMembership(
-            18_840_924_862_590_752_659_304_250_828_416_640_310_422_888_056_457_367_520_753_407_434_927_494_649_451,
-            1_524_785_991
-        );
+        registerMembership(18840924862590752659304250828416640310422888056457367520753407434927494649451, 100);
         vm.roll(block.number + 5750);
         vm.warp(block.timestamp + 2503);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            426_281_677_759_936_592_021_316_809_065_178_817_848_084_678_679_510_574_715_894_138_690_250_139_747, false
-        );
-        vm.roll(block.number + 21_989);
-        vm.warp(block.timestamp + 4_979_832);
+        attemptErasureRace(426281677759936592021316809065178817848084678679510574715894138690250139747, false);
+        vm.roll(block.number + 21989);
+        vm.warp(block.timestamp + 4979832);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptErasureRace(
-            21_853_424_399_738_097_885_762_888_601_689_700_621_597_911_601_971_608_617_330_124_755_808_946_442_755, true
-        );
-        vm.roll(block.number + 50_175);
-        vm.warp(block.timestamp + 2_618_050);
+        attemptErasureRace(21853424399738097885762888601689700621597911601971608617330124755808946442755, true);
+        vm.roll(block.number + 50175);
+        vm.warp(block.timestamp + 2618050);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.registerMembership(880, 4_294_967_294);
-        vm.roll(block.number + 44_581);
-        vm.warp(block.timestamp + 18_429_750);
+        registerMembership(880, 100);
+        vm.roll(block.number + 44581);
+        vm.warp(block.timestamp + 18429750);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.registerMembership(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_934,
-            2_412_500_201
-        );
-        vm.roll(block.number + 25_967);
-        vm.warp(block.timestamp + 2_753_174);
+        registerMembership(115792089237316195423570985008687907853269984665640564039457584007913129639934, 100);
+        vm.roll(block.number + 25967);
+        vm.warp(block.timestamp + 2753174);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(451);
+        attemptExtensionRace(451);
         vm.roll(block.number + 9057);
-        vm.warp(block.timestamp + 11_364_502);
+        vm.warp(block.timestamp + 11364502);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_934,
-            false
-        );
-        vm.roll(block.number + 11_905);
-        vm.warp(block.timestamp + 11_497_582);
+        attemptErasureRace(115792089237316195423570985008687907853269984665640564039457584007913129639934, false);
+        vm.roll(block.number + 11905);
+        vm.warp(block.timestamp + 11497582);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(20);
-        vm.roll(block.number + 51_936);
-        vm.warp(block.timestamp + 11_362_064);
+        attemptExtensionRace(20);
+        vm.roll(block.number + 51936);
+        vm.warp(block.timestamp + 11362064);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(4_369_999, true);
-        vm.roll(block.number + 16_748);
-        vm.warp(block.timestamp + 4_392_799);
+        attemptErasureRace(4369999, true);
+        vm.roll(block.number + 16748);
+        vm.warp(block.timestamp + 4392799);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.registerMembership(
-            11_715_857_356_293_458_169_128_266_324_582_842_123_295_933_765_556_118_813_133_626_045_122_493_941_020, 234
-        );
-        vm.roll(block.number + 34_563);
-        vm.warp(block.timestamp + 2_767_272);
+        registerMembership(11715857356293458169128266324582842123295933765556118813133626045122493941020, 100);
+        vm.roll(block.number + 34563);
+        vm.warp(block.timestamp + 2767272);
         vm.prank(0x0000000000000000000000000000000000040000);
-        echidna.attemptErasureRace(
-            113_494_438_387_109_549_875_854_423_138_737_438_623_578_968_565_768_162_582_136_905_694_666_899_965_063,
-            true
-        );
-        vm.roll(block.number + 28_021);
+        attemptErasureRace(113494438387109549875854423138737438623578968565768162582136905694666899965063, true);
+        vm.roll(block.number + 28021);
         vm.warp(block.timestamp + 24);
         vm.prank(0x0000000000000000000000000000000000010000);
-        echidna.attemptExtensionRace(
-            115_369_114_333_842_325_499_285_690_322_288_660_192_694_143_071_536_272_487_538_626_891_694_190_637_069
-        );
-        vm.roll(block.number + 21_122);
-        vm.warp(block.timestamp + 6_432_758);
+        attemptExtensionRace(115369114333842325499285690322288660192694143071536272487538626891694190637069);
+        vm.roll(block.number + 21122);
+        vm.warp(block.timestamp + 6432758);
         vm.prank(0x0000000000000000000000000000000000030000);
-        echidna.attemptErasureRace(
-            95_725_103_252_022_623_036_343_603_958_987_075_634_200_691_826_026_456_898_605_964_745_085_393_962_918,
-            false
-        );
+        attemptErasureRace(95725103252022623036343603958987075634200691826026456898605964745085393962918, false);
         vm.roll(block.number + 4898);
-        vm.warp(block.timestamp + 6_842_375);
+        vm.warp(block.timestamp + 6842375);
         vm.prank(0x0000000000000000000000000000000000020000);
-        echidna.attemptExtensionRace(
-            24_440_054_405_305_269_366_569_402_256_811_496_959_409_073_762_505_157_381_672_968_839_269_610_695_612
-        );
+        attemptExtensionRace(24440054405305269366569402256811496959409073762505157381672968839269610695612);
     }
 }
