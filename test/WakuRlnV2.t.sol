@@ -1644,4 +1644,63 @@ contract WakuRlnV2Test is Test {
         assertEq(w.getRootAt(0), root2);
         assertEq(w.getRootAt(1), root1);
     }
+
+    function test__RecentRoots_FullCleanupErasureUpdatesHistory() external {
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register three memberships (1,2,3), capturing roots after each
+        token.approve(address(w), price);
+        w.register(1, rate, noIdCommitmentsToErase);
+        uint256 r1 = w.root();
+
+        token.approve(address(w), price);
+        w.register(2, rate, noIdCommitmentsToErase);
+        uint256 r2 = w.root();
+
+        token.approve(address(w), price);
+        w.register(3, rate, noIdCommitmentsToErase);
+        uint256 r3 = w.root();
+
+        // Expire id 1 and erase with full clean-up (tree changes)
+        (,, uint256 gStart1, uint32 gDur1,,,,) = w.memberships(1);
+        vm.warp(gStart1 + gDur1 + 1);
+        uint256[] memory toErase = new uint256[](1);
+        toErase[0] = 1;
+        w.eraseMemberships(toErase, true);
+        uint256 r4 = w.root();
+        assertNotEq(r4, r3);
+
+        // Recent roots should be [r4, r3, r2, r1, 0]
+        {
+            uint256[HISTORY] memory recent = w.getRecentRoots();
+            assertEq(recent[0], r4);
+            assertEq(recent[1], r3);
+            assertEq(recent[2], r2);
+            assertEq(recent[3], r1);
+            assertEq(recent[4], 0);
+        }
+
+        // Now expire ids 2 and 3 and erase both in a single full clean-up call
+        (,, uint256 gStart3, uint32 gDur3,,,,) = w.memberships(3);
+        vm.warp(gStart3 + gDur3 + 1);
+        uint256[] memory batchErase = new uint256[](2);
+        batchErase[0] = 2;
+        batchErase[1] = 3;
+        // Capture the root before the batch to verify only one new history entry is pushed
+        uint256 preBatchRoot = w.root();
+        w.eraseMemberships(batchErase, true);
+        uint256 r5 = w.root();
+        assertNotEq(r5, preBatchRoot);
+
+        // Expect exactly one new entry for the batch (final root), so recent = [r5, r4, r3, r2, r1]
+        {
+            uint256[HISTORY] memory recent = w.getRecentRoots();
+            assertEq(recent[0], r5);
+            assertEq(recent[1], r4);
+            assertEq(recent[2], r3);
+            assertEq(recent[3], r2);
+            assertEq(recent[4], r1);
+        }
+    }
 }

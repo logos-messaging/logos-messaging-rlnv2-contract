@@ -200,6 +200,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
 
     /// @notice Returns the list of recent roots, newest first
     function getRecentRoots() external view returns (uint256[HISTORY_SIZE] memory ordered) {
+        // refresh the latest root - needed if memberships were changed/erased but no new root stored yet
         if (!initialized) {
             return ordered; // empty array if no roots yet
         }
@@ -221,6 +222,12 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
         return recentRoots[index];
     }
 
+    /// @notice Returns the root of the Merkle tree that stores rate commitments of memberships
+    /// @return The root of the Merkle tree that stores rate commitments of memberships
+    function root() public view returns (uint256) {
+        return LazyIMT.root(merkleTree, MERKLE_TREE_DEPTH);
+    }
+
     /// @dev Register a membership (internal function)
     /// @param idCommitment The idCommitment of the membership
     /// @param rateLimit The rate limit of the membership
@@ -234,14 +241,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
         }
 
         // ✅ After updating or inserting, capture and store the new root
-        uint256 newRoot = LazyIMT.root(merkleTree, MERKLE_TREE_DEPTH);
-        _storeNewRoot(newRoot);
-    }
-
-    /// @notice Returns the root of the Merkle tree that stores rate commitments of memberships
-    /// @return The root of the Merkle tree that stores rate commitments of memberships
-    function root() external view returns (uint256) {
-        return LazyIMT.root(merkleTree, MERKLE_TREE_DEPTH);
+        _storeNewRoot(root());
     }
 
     /// @notice Returns the Merkle proof that a given membership is in the membership set
@@ -294,6 +294,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
         // eraseFromMembershipSet == false means lazy erasure.
         //  Only erase memberships from the memberships array (consume less gas).
         //  Merkle tree data will be overwritten when the correspondind index is reused.
+        bool treeModified = false;
         for (uint256 i = 0; i < idCommitmentsToErase.length; i++) {
             // Erase the membership from the memberships array in contract storage
             uint32 indexToErase = _eraseMembershipLazily(_msgSender(), idCommitmentsToErase[i]);
@@ -301,7 +302,12 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
             // This does not affect the total rate limit control, or index reusal for new membership registrations.
             if (eraseFromMembershipSet) {
                 LazyIMT.update(merkleTree, 0, indexToErase);
+                treeModified = true;
             }
+        }
+        // Record only the final root once per batch full clean-up call to avoid duplicates.
+        if (treeModified) {
+            _storeNewRoot(root());
         }
     }
 
