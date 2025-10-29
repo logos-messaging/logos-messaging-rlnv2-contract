@@ -18,33 +18,37 @@ contract EchidnaReplay is Test {
         vm.warp(block.timestamp + 5_474_623);
         vm.prank(0x0000000000000000000000000000000000020000);
         echidna.registerMembership(
-            9_232_262_805_086_961_470_140_171_118_068_527_502_773_883_397_953_635_627_654_272_948_280_162_222_460, // Valid
-                // Baby Jubjub point x
-            100 // Reduced duration
+            // Valid Baby Jubjub point x
+            9_232_262_805_086_961_470_140_171_118_068_527_502_773_883_397_953_635_627_654_272_948_280_162_222_460,
+            // Reduced duration
+            100
         );
         vm.roll(block.number + 47_085);
         vm.warp(block.timestamp + 9_714_873);
         vm.prank(0x0000000000000000000000000000000000040000);
         echidna.registerMembership(
-            1_146_454_861_477_987_609_722_193_068_493_335_872_063_213_810_781_901_067_275_896_485_680_154_245_472, // Valid
-                // Baby Jubjub point y (used as x for variety)
-            100 // Reduced duration
+            // Valid Baby Jubjub point y (used as x for variety)
+            1_146_454_861_477_987_609_722_193_068_493_335_872_063_213_810_781_901_067_275_896_485_680_154_245_472,
+            // Reduced duration
+            100
         );
         vm.roll(block.number + 38_103);
         vm.warp(block.timestamp + 4_558_906);
         vm.prank(0x0000000000000000000000000000000000010000);
         echidna.registerMembership(
-            21_166_949_849_736_108_178_593_290_733_041_673_195_425_050_355_037_214_376_832_942_606_083_908_688_572, // From
-                // signature R x
-            100 // Reduced duration
+            // From signature R x
+            21_166_949_849_736_108_178_593_290_733_041_673_195_425_050_355_037_214_376_832_942_606_083_908_688_572,
+            // Reduced duration
+            100
         );
         vm.roll(block.number + 29_746);
         vm.warp(block.timestamp + 13_228_720);
         vm.prank(0x0000000000000000000000000000000000040000);
         echidna.registerMembership(
-            5_042_557_814_597_858_929_471_199_758_284_795_017_757_988_233_023_087_832_786_942_557_701_125_530_716, // From
-                // signature R y
-            100 // Reduced duration
+            // From signature R y
+            5_042_557_814_597_858_929_471_199_758_284_795_017_757_988_233_023_087_832_786_942_557_701_125_530_716,
+            // Reduced duration
+            100
         );
         vm.roll(block.number + 58_772);
         vm.warp(block.timestamp + 16_726_535);
