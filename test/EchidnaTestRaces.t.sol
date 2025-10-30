@@ -131,4 +131,3 @@ contract EchidnaTestRaces {
     }
 }
 
-
