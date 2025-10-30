@@ -28,8 +28,6 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
     /// @notice The depth of the Merkle tree that stores rate commitments of memberships
     uint8 public constant MERKLE_TREE_DEPTH = 20;
 
-    uint8 public constant HISTORY_SIZE = 5;
-
     /// @notice The maximum membership set size is the size of the Merkle tree (2 ^ depth)
     uint32 public MAX_MEMBERSHIP_SET_SIZE;
 
@@ -38,11 +36,6 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
 
     /// @notice The Merkle tree that stores rate commitments of memberships
     LazyIMTData public merkleTree;
-
-    // Fixed-size circular buffer for recent roots
-    uint256[HISTORY_SIZE] private recentRoots;
-    uint8 private rootIndex; // points to the next slot to overwrite
-    bool private initialized; // track first initialization
 
     /// @notice Сheck if the idCommitment is valid
     /// @param idCommitment The idCommitment of the membership
@@ -63,6 +56,20 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
         require(nextFreeIndex < MAX_MEMBERSHIP_SET_SIZE, "Membership set is full");
         _;
     }
+
+    // Fixed-size circular buffer for recent roots
+    uint8 public constant HISTORY_SIZE = 5;
+    /// @notice Fixed-size circular buffer storing the most recent HISTORY_SIZE roots
+    /// @dev Organized as a ring buffer where rootIndex points to the next write position
+    uint256[HISTORY_SIZE] private recentRoots;
+
+    /// @notice Index pointing to the next slot to write in the circular buffer
+    /// @dev Wraps around using modulo HISTORY_SIZE arithmetic
+    uint8 private rootIndex;
+
+    /// @notice Flag indicating if any roots have been stored yet
+    /// @dev Used to distinguish empty buffer from buffer with zero values
+    bool private rootsInitialized; // track first initialization
 
     constructor() {
         _disableInitializers();
@@ -188,10 +195,10 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
     /// @notice Adds a new root to the history (called after tree update)
     function _storeNewRoot(uint256 newRoot) internal {
         // Initialize buffer on first call
-        if (!initialized) {
+        if (!rootsInitialized) {
             recentRoots[0] = newRoot;
             rootIndex = 1;
-            initialized = true;
+            rootsInitialized = true;
         } else {
             recentRoots[rootIndex] = newRoot;
             rootIndex = (rootIndex + 1) % HISTORY_SIZE;
@@ -201,7 +208,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
     /// @notice Returns the list of recent roots, newest first
     function getRecentRoots() external view returns (uint256[HISTORY_SIZE] memory ordered) {
         // refresh the latest root - needed if memberships were changed/erased but no new root stored yet
-        if (!initialized) {
+        if (!rootsInitialized) {
             return ordered; // empty array if no roots yet
         }
 
@@ -216,7 +223,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
     /// @notice Get the root at a specific position (0 = newest)
     function getRootAt(uint8 position) external view returns (uint256) {
         require(position < HISTORY_SIZE, "Out of range");
-        require(initialized, "No roots yet");
+        require(rootsInitialized, "No roots yet");
 
         uint8 index = (rootIndex + HISTORY_SIZE - 1 - position) % HISTORY_SIZE;
         return recentRoots[index];
