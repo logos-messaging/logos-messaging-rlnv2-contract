@@ -156,21 +156,15 @@ contract WakuRlnV2Test is Test {
         vm.assume(
             // Case 1: During active (cannot extend) - extremes: start, near/end of active
             (timeDelta < active && (timeDelta == 0 || timeDelta == 1 || timeDelta == active - 1))
-            // Case 2: After expiration (cannot extend expired) - extremes: just after, next, far future
-            || (
-                timeDelta >= active + grace
-                    && (timeDelta == active + grace || timeDelta == active + grace + 1 || timeDelta == uint256Max)
-            )
-            // Case 3: Non-holder sender - extremes: zero addr, low, max addr
-            || (
-                sender != address(this)
-                    && (sender == address(0) || sender == address(1) || sender == address(type(uint160).max))
-            )
-            // Case 4: Invalid/non-existent ID - extremes: zero, near Q, at/over Q, max uint
-            || (
-                invalidId != validId
-                    && (invalidId == 0 || invalidId == w.Q() - 1 || invalidId == w.Q() || invalidId == uint256Max)
-            )
+                // Case 2: After expiration (cannot extend expired) - extremes: just after, next, far future
+                || (timeDelta >= active + grace
+                    && (timeDelta == active + grace || timeDelta == active + grace + 1 || timeDelta == uint256Max))
+                // Case 3: Non-holder sender - extremes: zero addr, low, max addr
+                || (sender != address(this)
+                    && (sender == address(0) || sender == address(1) || sender == address(type(uint160).max)))
+                // Case 4: Invalid/non-existent ID - extremes: zero, near Q, at/over Q, max uint
+                || (invalidId != validId
+                    && (invalidId == 0 || invalidId == w.Q() - 1 || invalidId == w.Q() || invalidId == uint256Max))
         );
 
         // Warp time if needed
@@ -478,8 +472,8 @@ contract WakuRlnV2Test is Test {
         vm.assume(
             // Valid: 0 <= start <= end < nextFree
             (startIndex <= endIndex && endIndex < nextFree)
-            // Invalid: start > end, or end >= nextFree, or extremes like uint32.max
-            || (startIndex > endIndex) || (endIndex >= nextFree) || (startIndex == type(uint32).max)
+                // Invalid: start > end, or end >= nextFree, or extremes like uint32.max
+                || (startIndex > endIndex) || (endIndex >= nextFree) || (startIndex == type(uint32).max)
                 || (endIndex == type(uint32).max) || (startIndex == nextFree - 1 && endIndex == nextFree)
         );
 
