@@ -1,16 +1,16 @@
 pragma solidity 0.8.24;
 
 // Initial test replay generated from Echidna log at https://getrecon.xyz/tools/echidna
-// Assume EchidnaTest.sol is the Echidna harness contract that defines the methods like registerMembership,
+// Assume EchidnaTestRaces.sol is the Echidna harness contract that defines the methods registerMembership,
 // attemptExtensionRace, attemptErasureRace.
-import "./EchidnaTest.t.sol";
-import "forge-std/Test.sol"; // Replace with the actual path to EchidnaTest.sol
+import "./EchidnaTestRaces.t.sol";
+import "forge-std/Test.sol";
 
-contract EchidnaReplay is Test {
-    EchidnaTest internal echidna;
+contract EchidnaReplayRaces is Test {
+    EchidnaTestRaces internal echidna;
 
     function setUp() public {
-        echidna = new EchidnaTest();
+        echidna = new EchidnaTestRaces();
     }
 
     function test_attemptErasureRace_WakuRLN() public {

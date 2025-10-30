@@ -7,7 +7,7 @@ import "./TestStableToken.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // Echidna invariants and assertions for WakuRlnV2 multi-user timestamp manipulation races
-contract EchidnaTest {
+contract EchidnaTestRaces {
     WakuRlnV2 internal w;
     TestStableToken internal token;
     address internal tokenOwner = address(this);
