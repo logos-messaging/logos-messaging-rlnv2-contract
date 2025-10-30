@@ -69,7 +69,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
 
     /// @notice Flag indicating if any roots have been stored yet
     /// @dev Used to distinguish empty buffer from buffer with zero values
-    bool private rootsInitialized; // track first initialization
+    bool private rootsInitialized;
 
     constructor() {
         _disableInitializers();
@@ -207,9 +207,9 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
 
     /// @notice Returns the list of recent roots, newest first
     function getRecentRoots() external view returns (uint256[HISTORY_SIZE] memory ordered) {
-        // refresh the latest root - needed if memberships were changed/erased but no new root stored yet
+        // Returns empty array if no roots have been stored yet
         if (!rootsInitialized) {
-            return ordered; // empty array if no roots yet
+            return ordered;
         }
 
         uint8 index = rootIndex;
