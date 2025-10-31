@@ -1,5 +1,5 @@
 solcArgs: "--via-ir --optimize --optimize-runs 1"
-testMode: assertion
+testMode: property
 testLimit: 100000  # For ~1 hour on strong CPU; adjust
 seqLen: 100  # Sequence length for stateful fuzzing
 shrinkLimit: 5000
