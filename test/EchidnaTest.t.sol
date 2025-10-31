@@ -6,15 +6,13 @@ import "../src/LinearPriceCalculator.sol";
 import "../src/Membership.sol";
 import "../test/TestStableToken.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { PoseidonT3 } from "poseidon-solidity/PoseidonT3.sol";
-import "forge-std/Test.sol";
 
 interface IHevm {
     function prank(address) external;
     function warp(uint256) external;
 }
 
-contract EchidnaTest is Test {
+contract EchidnaTest {
     WakuRlnV2 public w;
     TestStableToken public token;
     LinearPriceCalculator public priceCalculator;
