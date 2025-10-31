@@ -125,16 +125,7 @@ contract EchidnaTest {
     function echidna_total_rate_limit_correct() public view returns (bool) {
         uint256 computedTotal = 0;
         for (uint256 i = 0; i < activeIdCommitments.length; i++) {
-            (
-                uint256 depositAmount,
-                uint32 activeDuration,
-                uint256 gracePeriodStartTimestamp,
-                uint32 gracePeriodDuration,
-                uint32 rateLimitMem,
-                uint32 index,
-                address holder,
-                address tokenAddr
-            ) = w.memberships(activeIdCommitments[i]);
+            (,,,, uint32 rateLimitMem,,,) = w.memberships(activeIdCommitments[i]);
             computedTotal += rateLimitMem;
         }
         return w.currentTotalRateLimit() == computedTotal;
