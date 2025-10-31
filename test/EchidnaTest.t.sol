@@ -7,16 +7,10 @@ import "../src/Membership.sol";
 import "../test/TestStableToken.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-interface IHevm {
-    function prank(address) external;
-    function warp(uint256) external;
-}
-
 contract EchidnaTest {
     WakuRlnV2 public w;
     TestStableToken public token;
     LinearPriceCalculator public priceCalculator;
-    IHevm public hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
     uint32 public constant MAX_TOTAL_RATELIMIT_PER_EPOCH = 160_000;
     uint32 public constant MIN_RATELIMIT_PER_MEMBERSHIP = 20;
@@ -59,79 +53,6 @@ contract EchidnaTest {
         // Mint and approve tokens
         token.mint(address(this), 1_000_000 ether);
         token.approve(address(w), type(uint256).max);
-    }
-
-    // Wrapper functions for random calls
-    function wrap_register(uint256 idCommitment, uint32 rateLimit) public {
-        if (
-            idCommitment > 0 && idCommitment < w.Q() && rateLimit >= MIN_RATELIMIT_PER_MEMBERSHIP
-                && rateLimit <= MAX_RATELIMIT_PER_MEMBERSHIP
-                && w.currentTotalRateLimit() + rateLimit <= w.maxTotalRateLimit()
-        ) {
-            uint256[] memory empty = new uint256[](0);
-            w.register(idCommitment, rateLimit, empty);
-            (
-                uint256 depositAmount,
-                uint32 activeDuration,
-                uint256 gracePeriodStartTimestamp,
-                uint32 gracePeriodDuration,
-                uint32 rateLimitMem,
-                uint32 index,
-                address holder,
-                address tokenAddr
-            ) = w.memberships(idCommitment);
-            indexToId[index] = idCommitment;
-            indexToRate[index] = rateLimit;
-            activeIdCommitments.push(idCommitment);
-            idToExpectedActiveDuration[idCommitment] = w.activeDurationForNewMemberships();
-        }
-    }
-
-    function wrap_eraseMemberships(uint256 idCommitment, bool fullErase, uint256 timeDelta) public {
-        hevm.warp(block.timestamp + timeDelta);
-        (
-            uint256 depositAmount,
-            uint32 activeDuration,
-            uint256 gracePeriodStartTimestamp,
-            uint32 gracePeriodDuration,
-            uint32 rateLimitMem,
-            uint32 index,
-            address holder,
-            address tokenAddr
-        ) = w.memberships(idCommitment);
-        if (w.isExpired(idCommitment) || (w.isInGracePeriod(idCommitment) && msg.sender == holder)) {
-            uint256[] memory ids = new uint256[](1);
-            ids[0] = idCommitment;
-            w.eraseMemberships(ids, fullErase);
-            delete indexToId[index];
-            delete indexToRate[index];
-            removeFromActive(idCommitment);
-            delete idToExpectedActiveDuration[idCommitment];
-        }
-    }
-
-    function wrap_setMaxTotalRateLimit(uint32 newLimit) public {
-        if (newLimit >= w.maxMembershipRateLimit() && newLimit >= uint32(w.currentTotalRateLimit())) {
-            hevm.prank(w.owner());
-            w.setMaxTotalRateLimit(newLimit);
-        }
-    }
-
-    function wrap_setActiveDuration(uint32 newDuration) public {
-        if (newDuration > 0) {
-            hevm.prank(w.owner());
-            w.setActiveDuration(newDuration);
-        }
-    }
-
-    function removeFromActive(uint256 id) internal {
-        for (uint256 j = 0; j < activeIdCommitments.length; j++) {
-            if (activeIdCommitments[j] == id) {
-                activeIdCommitments[j] = activeIdCommitments[activeIdCommitments.length - 1];
-                activeIdCommitments.pop();
-                break;
-            }
-        }
     }
 
     // Helper for proof verification
