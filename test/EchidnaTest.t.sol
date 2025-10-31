@@ -111,7 +111,7 @@ contract EchidnaTest {
     function echidna_merkle_proof_valid() public view returns (bool) {
         uint32 nextFree = w.nextFreeIndex();
         if (nextFree == 0) return true;
-        for (uint32 index = 0; index < nextFree && index < 10; index++) {
+        for (uint32 index = 0; index < nextFree; index++) {
             uint256[20] memory proof = w.getMerkleProof(index);
             uint256 root = w.root();
             uint256 expectedCommitment = w.getRateCommitmentsInRangeBoundsInclusive(index, index)[0];
@@ -150,7 +150,7 @@ contract EchidnaTest {
     function echidna_merkle_inserts_integrity() public view returns (bool) {
         uint32 nextFree = w.nextFreeIndex();
         if (nextFree == 0) return true;
-        for (uint32 index = 0; index < nextFree && index < 10; index++) {
+        for (uint32 index = 0; index < nextFree; index++) {
             uint256 commitment = w.getRateCommitmentsInRangeBoundsInclusive(index, index)[0];
             if (indexToRate[index] != 0) {
                 uint256 exp = PoseidonT3.hash([indexToId[index], uint256(indexToRate[index])]);
@@ -165,7 +165,7 @@ contract EchidnaTest {
     function echidna_merkle_erasures_integrity() public view returns (bool) {
         uint32 nextFree = w.nextFreeIndex();
         if (nextFree == 0) return true;
-        for (uint32 index = 0; index < nextFree && index < 10; index++) {
+        for (uint32 index = 0; index < nextFree; index++) {
             uint256 commitment = w.getRateCommitmentsInRangeBoundsInclusive(index, index)[0];
             if (indexToRate[index] == 0) {
                 continue; // Erased, skip
