@@ -98,36 +98,5 @@ contract EchidnaTestRaces {
         assert(w.isExpired(focusId) == isExpired);
         assert(!w.isInGracePeriod(focusId) == (isExpired || isActive));
     }
-
-    // Helper for proof verification (if needed in future expansions)
-    function _verifyMerkleProof(
-        uint256[20] memory proof,
-        uint256 root,
-        uint32 index,
-        uint256 leaf,
-        uint8 depth
-    )
-        internal
-        pure
-        returns (bool)
-    {
-        uint256 current = leaf;
-        uint32 idx = index;
-        for (uint8 level = 0; level < depth; level++) {
-            bool isLeft = (idx & 1) == 0;
-            uint256 sibling = proof[level];
-            uint256[2] memory inputs;
-            if (isLeft) {
-                inputs[0] = current;
-                inputs[1] = sibling;
-            } else {
-                inputs[0] = sibling;
-                inputs[1] = current;
-            }
-            current = PoseidonT3.hash(inputs);
-            idx >>= 1;
-        }
-        return current == root;
-    }
 }
 
