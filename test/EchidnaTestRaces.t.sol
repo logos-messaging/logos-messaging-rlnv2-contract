@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import "../src/LinearPriceCalculator.sol";
 import "../src/WakuRlnV2.sol";
+import "../src/Membership.sol"; // Added import for MembershipUpgradeable
 import "./TestStableToken.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -12,9 +13,8 @@ contract EchidnaTestRaces {
     TestStableToken internal token;
     address internal tokenOwner = address(this);
 
-    // Storage for multi-user registrations and their timestamps (to check races per user)
-    mapping(uint256 => uint256) internal registrationTimes; // idCommitment => registration timestamp
-    uint256[] internal registeredIds; // List of registered IDs for iteration in checks
+    // Storage for multi-user registrations (to track registered IDs)
+    uint256[] internal registeredIds;
 
     constructor() {
         address tokenImpl = address(new TestStableToken());
@@ -38,8 +38,7 @@ contract EchidnaTestRaces {
         token.approve(address(w), price);
         w.register(idCommitment, rateLimit, new uint256[](0));
 
-        // Store registration time and add to list
-        registrationTimes[idCommitment] = block.timestamp;
+        // Add to list (only if successful; reverts otherwise)
         registeredIds.push(idCommitment);
     }
 
@@ -48,12 +47,31 @@ contract EchidnaTestRaces {
         if (registeredIds.length == 0) return; // Skip if no registrations yet
 
         uint256 focusId = registeredIds[index % registeredIds.length];
-        uint256 regTime = registrationTimes[focusId];
-        uint256 graceStart = regTime + uint256(w.activeDurationForNewMemberships());
-        uint256 graceEnd = graceStart + uint256(w.gracePeriodDurationForNewMemberships());
 
+        // Query current membership info from contract to handle updates (e.g., from extensions)
+        MembershipUpgradeable.MembershipInfo memory info;
+        (
+            info.depositAmount,
+            info.activeDuration,
+            info.gracePeriodStartTimestamp,
+            info.gracePeriodDuration,
+            info.rateLimit,
+            info.index,
+            info.holder,
+            info.token
+        ) = w.memberships(focusId);
+
+        // If membership doesn't exist (e.g., erased), skip
+        if (info.rateLimit == 0) return;
+
+        uint256 graceStart = info.gracePeriodStartTimestamp;
+        uint256 graceEnd = graceStart + uint256(info.gracePeriodDuration);
         bool isInGrace = (block.timestamp >= graceStart && block.timestamp < graceEnd);
         bool isExpired = (block.timestamp >= graceEnd);
+
+        // Additional assertions: State consistency (pre-operation)
+        assert(w.isInGracePeriod(focusId) == isInGrace);
+        assert(w.isExpired(focusId) == isExpired);
 
         uint256[] memory ids = new uint256[](1);
         ids[0] = focusId;
@@ -63,12 +81,8 @@ contract EchidnaTestRaces {
             success = true;
         } catch { }
 
-        // Assertion: Extension should succeed only if in grace period
+        // Assertion: Extension should succeed only if in grace period (and sender is holder, but always true here)
         assert(success == isInGrace);
-
-        // Additional assertions: State consistency
-        assert(w.isInGracePeriod(focusId) == isInGrace);
-        assert(w.isExpired(focusId) == isExpired);
     }
 
     // Function to attempt erasure on a random registered membership and assert based on current time
@@ -76,12 +90,33 @@ contract EchidnaTestRaces {
         if (registeredIds.length == 0) return; // Skip if no registrations yet
 
         uint256 focusId = registeredIds[index % registeredIds.length];
-        uint256 regTime = registrationTimes[focusId];
-        uint256 activeEnd = regTime + uint256(w.activeDurationForNewMemberships());
-        uint256 graceEnd = activeEnd + uint256(w.gracePeriodDurationForNewMemberships());
+
+        // Query current membership info from contract to handle updates
+        MembershipUpgradeable.MembershipInfo memory info;
+        (
+            info.depositAmount,
+            info.activeDuration,
+            info.gracePeriodStartTimestamp,
+            info.gracePeriodDuration,
+            info.rateLimit,
+            info.index,
+            info.holder,
+            info.token
+        ) = w.memberships(focusId);
+
+        // If membership doesn't exist (e.g., already erased), skip
+        if (info.rateLimit == 0) return;
+
+        uint256 graceStart = info.gracePeriodStartTimestamp;
+        uint256 activeEnd = graceStart; // graceStart is end of active
+        uint256 graceEnd = graceStart + uint256(info.gracePeriodDuration);
 
         bool isActive = (block.timestamp < activeEnd);
         bool isExpired = (block.timestamp >= graceEnd);
+
+        // Additional assertions: State consistency (pre-operation)
+        assert(w.isExpired(focusId) == isExpired);
+        assert(w.isInGracePeriod(focusId) == !(isExpired || isActive));
 
         uint256[] memory ids = new uint256[](1);
         ids[0] = focusId;
@@ -92,11 +127,19 @@ contract EchidnaTestRaces {
         } catch { }
 
         // Assertion: Erasure should succeed only if not active (i.e., in grace or expired)
+        // (and for grace, sender == holder, but always true here)
         assert(success == !isActive);
 
-        // Additional assertions: State consistency
-        assert(w.isExpired(focusId) == isExpired);
-        assert(!w.isInGracePeriod(focusId) == (isExpired || isActive));
+        // If successful erasure, remove from local registeredIds to avoid stale entries
+        if (success) {
+            // Find and remove focusId from array (swap with last and pop)
+            for (uint256 i = 0; i < registeredIds.length; i++) {
+                if (registeredIds[i] == focusId) {
+                    registeredIds[i] = registeredIds[registeredIds.length - 1];
+                    registeredIds.pop();
+                    break;
+                }
+            }
+        }
     }
 }
-
