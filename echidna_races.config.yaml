@@ -1,0 +1,19 @@
+solcArgs: "--via-ir --optimize --optimize-runs 1"
+testMode: assertion
+testLimit: 100000  # For ~1 hour on strong CPU; adjust
+seqLen: 100  # Sequence length for stateful fuzzing
+shrinkLimit: 5000
+corpusDir: corpus
+deployContracts:
+  - ["0x0000000000000000000000000000000000001000", "PoseidonT3"]
+  - ["0x0000000000000000000000000000000000001001", "LazyIMT"]
+cryticArgs:
+  - "--compile-libraries=(PoseidonT3,0x0000000000000000000000000000000000001000),(LazyIMT,0x0000000000000000000000000000000000001001)"
+propMaxGas: 25000000
+testMaxGas: 25000000
+maxTimeDelay: 20000000 # ~231 days in seconds; set high to cover active (180 days / 15552000s) and grace (30 days / 2592000s) periods for expiration races
+sender: ["0x10000", "0x20000", "0x30000", "0x40000"]  # Multiple senders to simulate different users; expand if needed
+balanceAddr: 100000000000000000000
+coverage: true
+quiet: false
+projectName: "WakuRlnV2"

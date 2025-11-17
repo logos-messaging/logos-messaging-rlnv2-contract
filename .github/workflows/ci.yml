@@ -117,7 +117,7 @@ jobs:
           )" >> $GITHUB_ENV
 
       - name: "Run the tests"
-        run: "forge test"
+        run: 'forge test --no-match-path "test/Echidna*.t.sol"'
 
       - name: "Add test summary"
         run: |
@@ -151,7 +151,7 @@ jobs:
         run: "pnpm install"
 
       - name: "Generate the coverage report using the unit and the integration tests"
-        run: 'forge coverage --match-path "test/**/*.sol" --report lcov'
+        run: 'forge coverage --match-path "test/**/*.sol" --no-match-path "test/Echidna*.t.sol" --report lcov'
 
       - name: "Upload coverage report to Codecov"
         uses: "codecov/codecov-action@v3"
