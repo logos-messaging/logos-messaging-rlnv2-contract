@@ -37,6 +37,10 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
     /// @notice The Merkle tree that stores rate commitments of memberships
     LazyIMTData public merkleTree;
 
+    /// @notice Emitted whenever a new Merkle tree root is stored
+    /// @param newRoot The newly stored Merkle tree root
+    event RootStored(uint256 newRoot);
+
     /// @notice Сheck if the idCommitment is valid
     /// @param idCommitment The idCommitment of the membership
     modifier onlyValidIdCommitment(uint256 idCommitment) {
@@ -59,6 +63,7 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
 
     // Fixed-size circular buffer for recent roots
     uint8 public constant HISTORY_SIZE = 5;
+
     /// @notice Fixed-size circular buffer storing the most recent HISTORY_SIZE roots
     /// @dev Organized as a ring buffer where rootIndex points to the next write position
     uint256[HISTORY_SIZE] private recentRoots;
@@ -203,6 +208,8 @@ contract WakuRlnV2 is Initializable, OwnableUpgradeable, UUPSUpgradeable, Member
             recentRoots[rootIndex] = newRoot;
             rootIndex = (rootIndex + 1) % HISTORY_SIZE;
         }
+
+        emit RootStored(newRoot);
     }
 
     /// @notice Returns the list of recent roots, newest first

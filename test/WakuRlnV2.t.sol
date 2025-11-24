@@ -1279,6 +1279,24 @@ contract WakuRlnV2Test is Test {
         assertEq(token.balanceOf(address(w)), newPrice);
     }
 
+    function test__RootStoredEvent_OnRegister() external {
+        uint32 rateLimit = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+
+        token.approve(address(w), price);
+        uint256 idCommitment = 42;
+
+        // First: expect RootStored (emitted from _upsertInTree via _storeNewRoot)
+        vm.expectEmit(false, false, false, false); // only match event signature
+        emit WakuRlnV2.RootStored(0); // value ignored because all data=false
+
+        // Then: expect MembershipRegistered (emitted afterward)
+        vm.expectEmit(true, true, false, false); // check idCommitment + rateLimit
+        emit MembershipUpgradeable.MembershipRegistered(idCommitment, rateLimit, 0);
+
+        w.register(idCommitment, rateLimit, noIdCommitmentsToErase);
+    }
+
     function test__ZeroPriceEdgeCase() external {
         MockPriceCalculator zeroPriceCalc = new MockPriceCalculator(address(token), 0);
 
@@ -1698,5 +1716,119 @@ contract WakuRlnV2Test is Test {
             assertEq(recent[3], r2);
             assertEq(recent[4], r1);
         }
+    }
+
+    function test__RecentRoots_BatchFullEraseNoWrap() external {
+        uint256 initialRoot = w.root();
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register 2 memberships to avoid wrap-around (2 registers + 2 erases = 4 < 5)
+        uint256 root1;
+        token.approve(address(w), price);
+        w.register(1, rate, noIdCommitmentsToErase);
+        root1 = w.root();
+
+        uint256 root2;
+        token.approve(address(w), price);
+        w.register(2, rate, noIdCommitmentsToErase);
+        root2 = w.root();
+
+        // Warp to expire all (assuming same registration time, all expire together)
+        (,, uint256 graceStart,,,,,) = w.memberships(1);
+        vm.warp(graceStart + w.gracePeriodDurationForNewMemberships() + 1);
+
+        // Prepare ids to erase
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        // Full erase all 2 in one tx
+        w.eraseMemberships(ids, true);
+
+        // After erases, roots added for each update
+        uint256 finalRoot = w.root(); // Final root after all erases (should be initial empty tree root)
+        assertEq(finalRoot, initialRoot);
+
+        // History should have the 2 new roots from erases + previous 2, with one 0
+        uint256[HISTORY] memory recent = w.getRecentRoots();
+        assertEq(recent[0], finalRoot); // Newest: after last erase (initialRoot)
+        assertEq(recent[2], root1); // After second register
+        assertEq(recent[3], 0); // After first register
+        assertEq(recent[4], 0); // Unused slot
+        // recent[1] = after first erase (intermediate, non-zero, different)
+        assertNotEq(recent[1], 0);
+        assertNotEq(recent[1], recent[0]);
+        assertNotEq(recent[1], recent[2]);
+    }
+
+    function test__RecentRoots_BatchFullEraseWithWrap() external {
+        uint256 initialRoot = w.root();
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register 5 memberships to fill history
+        for (uint256 i = 1; i <= 5; i++) {
+            token.approve(address(w), price);
+            w.register(i, rate, noIdCommitmentsToErase);
+        }
+        uint256 root5 = w.root();
+
+        // Warp to expire all
+        (,, uint256 graceStart,,,,,) = w.memberships(1);
+        vm.warp(graceStart + w.gracePeriodDurationForNewMemberships() + 1);
+
+        // Erase ids one at a time to update root each time
+        uint256[] memory ids = new uint256[](1);
+        for (uint256 i = 0; i < 5; i++) {
+            ids[0] = i + 1;
+            w.eraseMemberships(ids, true);
+        }
+
+        uint256 finalRoot = w.root(); // Should be initial empty tree root
+        assertEq(finalRoot, initialRoot);
+
+        // History should now contain the 5 new roots from the erases, newest first
+        uint256[HISTORY] memory recent = w.getRecentRoots();
+        assertEq(recent[0], finalRoot);
+
+        // Assert no old roots remain (e.g., root5 not in history)
+        for (uint8 i = 0; i < HISTORY; i++) {
+            assertNotEq(recent[i], root5);
+            assertNotEq(recent[i], 0);
+        }
+
+        // Check getRootAt
+        assertEq(w.getRootAt(0), finalRoot);
+    }
+
+    function test__RecentRoots_UpgradePreservesHistory() external {
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Fill history with 6 registers to have wrap
+        for (uint256 i = 1; i <= 6; i++) {
+            token.approve(address(w), price);
+            w.register(i, rate, noIdCommitmentsToErase);
+        }
+        uint256[HISTORY] memory preUpgradeRecent = w.getRecentRoots();
+
+        // Deploy new implementation (assuming same contract for simplicity, or a new version)
+        address newImpl = address(new WakuRlnV2());
+
+        // Upgrade as owner
+        vm.prank(w.owner());
+        w.upgradeTo(newImpl);
+
+        // Check history unchanged
+        uint256[HISTORY] memory postUpgradeRecent = w.getRecentRoots();
+        for (uint8 i = 0; i < HISTORY; i++) {
+            assertEq(postUpgradeRecent[i], preUpgradeRecent[i]);
+        }
+
+        // Further operations work
+        token.approve(address(w), price);
+        w.register(7, rate, noIdCommitmentsToErase);
+        assertNotEq(w.getRootAt(0), preUpgradeRecent[0]);
     }
 }
