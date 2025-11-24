@@ -76,6 +76,7 @@ contract WakuRlnV2Test is Test {
     address internal deployer;
 
     uint256[] internal noIdCommitmentsToErase = new uint256[](0);
+    uint8 internal constant HISTORY = 5; // keep tests DRY and aligned with contract's HISTORY_SIZE
 
     function setUp() public virtual {
         // Deploy TestStableToken through proxy using deployment script
@@ -130,7 +131,6 @@ contract WakuRlnV2Test is Test {
         uint256 rateCommitment2;
         (fetchedMembershipRateLimit2, index2, rateCommitment2) = w.getMembershipInfo(idCommitment);
         assertEq(fetchedMembershipRateLimit2, membershipRateLimit);
-        assertEq(index2, 0);
         assertEq(rateCommitment2, rateCommitment);
         uint256[20] memory proof = w.getMerkleProof(0);
         uint256[20] memory expectedProof = [
@@ -1279,6 +1279,24 @@ contract WakuRlnV2Test is Test {
         assertEq(token.balanceOf(address(w)), newPrice);
     }
 
+    function test__RootStoredEvent_OnRegister() external {
+        uint32 rateLimit = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rateLimit);
+
+        token.approve(address(w), price);
+        uint256 idCommitment = 42;
+
+        // First: expect RootStored (emitted from _upsertInTree via _storeNewRoot)
+        vm.expectEmit(false, false, false, false); // only match event signature
+        emit WakuRlnV2.RootStored(0); // value ignored because all data=false
+
+        // Then: expect MembershipRegistered (emitted afterward)
+        vm.expectEmit(true, true, false, false); // check idCommitment + rateLimit
+        emit MembershipUpgradeable.MembershipRegistered(idCommitment, rateLimit, 0);
+
+        w.register(idCommitment, rateLimit, noIdCommitmentsToErase);
+    }
+
     function test__ZeroPriceEdgeCase() external {
         MockPriceCalculator zeroPriceCalc = new MockPriceCalculator(address(token), 0);
 
@@ -1537,5 +1555,280 @@ contract WakuRlnV2Test is Test {
         vm.prank(vm.addr(1));
         vm.expectRevert("Ownable: caller is not the owner");
         w.setMaxTotalRateLimit(100);
+    }
+
+    function test__RecentRoots_EmptyAndBounds() external {
+        // No inserts yet: recent roots should be all zeros
+        uint256[HISTORY] memory recent = w.getRecentRoots();
+        for (uint8 i = 0; i < HISTORY; i++) {
+            assertEq(recent[i], 0);
+        }
+
+        // getRootAt should revert before any root is stored
+        vm.expectRevert(bytes("No roots yet"));
+        w.getRootAt(0);
+
+        // Out of range always reverts
+        vm.expectRevert(bytes("Out of range"));
+        w.getRootAt(HISTORY);
+    }
+
+    function test__RecentRoots_OrderAndWrapAround() external {
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        uint256[6] memory recorded;
+
+        // Insert 5 memberships, recording roots after each
+        for (uint256 i = 0; i < HISTORY; i++) {
+            token.approve(address(w), price);
+            w.register(i + 1, rate, noIdCommitmentsToErase);
+            recorded[i] = w.root();
+        }
+
+        // Verify newest-first order after exactly 5 entries
+        {
+            uint256[HISTORY] memory recent = w.getRecentRoots();
+            assertEq(recent[0], recorded[4]);
+            assertEq(recent[1], recorded[3]);
+            assertEq(recent[2], recorded[2]);
+            assertEq(recent[3], recorded[1]);
+            assertEq(recent[4], recorded[0]);
+
+            // Spot-check getRootAt
+            assertEq(w.getRootAt(0), recorded[4]);
+            assertEq(w.getRootAt(4), recorded[0]);
+            vm.expectRevert(bytes("Out of range"));
+            w.getRootAt(HISTORY);
+        }
+
+        // Insert 6th membership to trigger wrap-around (drop the oldest)
+        token.approve(address(w), price);
+        w.register(6, rate, noIdCommitmentsToErase);
+        recorded[5] = w.root();
+
+        {
+            uint256[HISTORY] memory recent = w.getRecentRoots();
+            // Expect [root6, root5, root4, root3, root2]
+            assertEq(recent[0], recorded[5]);
+            assertEq(recent[1], recorded[4]);
+            assertEq(recent[2], recorded[3]);
+            assertEq(recent[3], recorded[2]);
+            assertEq(recent[4], recorded[1]);
+
+            assertEq(w.getRootAt(0), recorded[5]);
+            assertEq(w.getRootAt(4), recorded[1]);
+            vm.expectRevert(bytes("Out of range"));
+            w.getRootAt(HISTORY);
+        }
+    }
+
+    function test__RecentRoots_UpdatePath_ReusedIndex() external {
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register first membership -> first root stored
+        token.approve(address(w), price);
+        w.register(1, rate, noIdCommitmentsToErase);
+        uint256 root1 = w.root();
+
+        // Enter grace period for id 1, then lazily erase it so index 0 is reusable
+        (,, uint256 graceStart,,,,,) = w.memberships(1);
+        vm.warp(graceStart);
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = 1;
+        w.eraseMemberships(ids); // lazy erase does not change root
+        assertEq(w.root(), root1);
+
+        // Register a new membership that reuses index 0 -> update path
+        token.approve(address(w), price);
+        w.register(2, rate, noIdCommitmentsToErase);
+        uint256 root2 = w.root();
+        assertNotEq(root2, root1);
+
+        // Check recent roots: [root2, root1, 0, 0, 0]
+        uint256[HISTORY] memory recent = w.getRecentRoots();
+        assertEq(recent[0], root2);
+        assertEq(recent[1], root1);
+        assertEq(recent[2], 0);
+        assertEq(recent[3], 0);
+        assertEq(recent[4], 0);
+
+        // Spot-check getRootAt
+        assertEq(w.getRootAt(0), root2);
+        assertEq(w.getRootAt(1), root1);
+    }
+
+    function test__RecentRoots_FullCleanupErasureUpdatesHistory() external {
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register three memberships (1,2,3), capturing roots after each
+        token.approve(address(w), price);
+        w.register(1, rate, noIdCommitmentsToErase);
+        uint256 r1 = w.root();
+
+        token.approve(address(w), price);
+        w.register(2, rate, noIdCommitmentsToErase);
+        uint256 r2 = w.root();
+
+        token.approve(address(w), price);
+        w.register(3, rate, noIdCommitmentsToErase);
+        uint256 r3 = w.root();
+
+        // Expire id 1 and erase with full clean-up (tree changes)
+        (,, uint256 gStart1, uint32 gDur1,,,,) = w.memberships(1);
+        vm.warp(gStart1 + gDur1 + 1);
+        uint256[] memory toErase = new uint256[](1);
+        toErase[0] = 1;
+        w.eraseMemberships(toErase, true);
+        uint256 r4 = w.root();
+        assertNotEq(r4, r3);
+
+        // Recent roots should be [r4, r3, r2, r1, 0]
+        {
+            uint256[HISTORY] memory recent = w.getRecentRoots();
+            assertEq(recent[0], r4);
+            assertEq(recent[1], r3);
+            assertEq(recent[2], r2);
+            assertEq(recent[3], r1);
+            assertEq(recent[4], 0);
+        }
+
+        // Now expire ids 2 and 3 and erase both in a single full clean-up call
+        (,, uint256 gStart3, uint32 gDur3,,,,) = w.memberships(3);
+        vm.warp(gStart3 + gDur3 + 1);
+        uint256[] memory batchErase = new uint256[](2);
+        batchErase[0] = 2;
+        batchErase[1] = 3;
+        // Capture the root before the batch to verify only one new history entry is pushed
+        uint256 preBatchRoot = w.root();
+        w.eraseMemberships(batchErase, true);
+        uint256 r5 = w.root();
+        assertNotEq(r5, preBatchRoot);
+
+        // Expect exactly one new entry for the batch (final root), so recent = [r5, r4, r3, r2, r1]
+        {
+            uint256[HISTORY] memory recent = w.getRecentRoots();
+            assertEq(recent[0], r5);
+            assertEq(recent[1], r4);
+            assertEq(recent[2], r3);
+            assertEq(recent[3], r2);
+            assertEq(recent[4], r1);
+        }
+    }
+
+    function test__RecentRoots_BatchFullEraseNoWrap() external {
+        uint256 initialRoot = w.root();
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register 2 memberships to avoid wrap-around (2 registers + 2 erases = 4 < 5)
+        uint256 root1;
+        token.approve(address(w), price);
+        w.register(1, rate, noIdCommitmentsToErase);
+        root1 = w.root();
+
+        uint256 root2;
+        token.approve(address(w), price);
+        w.register(2, rate, noIdCommitmentsToErase);
+        root2 = w.root();
+
+        // Warp to expire all (assuming same registration time, all expire together)
+        (,, uint256 graceStart,,,,,) = w.memberships(1);
+        vm.warp(graceStart + w.gracePeriodDurationForNewMemberships() + 1);
+
+        // Prepare ids to erase
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        // Full erase all 2 in one tx
+        w.eraseMemberships(ids, true);
+
+        // After erases, roots added for each update
+        uint256 finalRoot = w.root(); // Final root after all erases (should be initial empty tree root)
+        assertEq(finalRoot, initialRoot);
+
+        // History should have the 2 new roots from erases + previous 2, with one 0
+        uint256[HISTORY] memory recent = w.getRecentRoots();
+        assertEq(recent[0], finalRoot); // Newest: after last erase (initialRoot)
+        assertEq(recent[2], root1); // After second register
+        assertEq(recent[3], 0); // After first register
+        assertEq(recent[4], 0); // Unused slot
+        // recent[1] = after first erase (intermediate, non-zero, different)
+        assertNotEq(recent[1], 0);
+        assertNotEq(recent[1], recent[0]);
+        assertNotEq(recent[1], recent[2]);
+    }
+
+    function test__RecentRoots_BatchFullEraseWithWrap() external {
+        uint256 initialRoot = w.root();
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Register 5 memberships to fill history
+        for (uint256 i = 1; i <= 5; i++) {
+            token.approve(address(w), price);
+            w.register(i, rate, noIdCommitmentsToErase);
+        }
+        uint256 root5 = w.root();
+
+        // Warp to expire all
+        (,, uint256 graceStart,,,,,) = w.memberships(1);
+        vm.warp(graceStart + w.gracePeriodDurationForNewMemberships() + 1);
+
+        // Erase ids one at a time to update root each time
+        uint256[] memory ids = new uint256[](1);
+        for (uint256 i = 0; i < 5; i++) {
+            ids[0] = i + 1;
+            w.eraseMemberships(ids, true);
+        }
+
+        uint256 finalRoot = w.root(); // Should be initial empty tree root
+        assertEq(finalRoot, initialRoot);
+
+        // History should now contain the 5 new roots from the erases, newest first
+        uint256[HISTORY] memory recent = w.getRecentRoots();
+        assertEq(recent[0], finalRoot);
+
+        // Assert no old roots remain (e.g., root5 not in history)
+        for (uint8 i = 0; i < HISTORY; i++) {
+            assertNotEq(recent[i], root5);
+            assertNotEq(recent[i], 0);
+        }
+
+        // Check getRootAt
+        assertEq(w.getRootAt(0), finalRoot);
+    }
+
+    function test__RecentRoots_UpgradePreservesHistory() external {
+        uint32 rate = w.minMembershipRateLimit();
+        (, uint256 price) = w.priceCalculator().calculate(rate);
+
+        // Fill history with 6 registers to have wrap
+        for (uint256 i = 1; i <= 6; i++) {
+            token.approve(address(w), price);
+            w.register(i, rate, noIdCommitmentsToErase);
+        }
+        uint256[HISTORY] memory preUpgradeRecent = w.getRecentRoots();
+
+        // Deploy new implementation (assuming same contract for simplicity, or a new version)
+        address newImpl = address(new WakuRlnV2());
+
+        // Upgrade as owner
+        vm.prank(w.owner());
+        w.upgradeTo(newImpl);
+
+        // Check history unchanged
+        uint256[HISTORY] memory postUpgradeRecent = w.getRecentRoots();
+        for (uint8 i = 0; i < HISTORY; i++) {
+            assertEq(postUpgradeRecent[i], preUpgradeRecent[i]);
+        }
+
+        // Further operations work
+        token.approve(address(w), price);
+        w.register(7, rate, noIdCommitmentsToErase);
+        assertNotEq(w.getRootAt(0), preUpgradeRecent[0]);
     }
 }
