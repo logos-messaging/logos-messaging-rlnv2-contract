@@ -24,6 +24,7 @@
     "solidity",
     "template"
   ],
+  "packageManager": "pnpm@10.23.0",
   "private": true,
   "scripts": {
     "clean": "rm -rf cache out",
