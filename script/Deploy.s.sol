@@ -46,7 +46,7 @@ contract DeployWakuRlnV2 is BaseScript {
 }
 
 contract DeployProxy is BaseScript {
-    uint32 public constant MAX_TOTAL_RATELIMIT_PER_EPOCH = 160_000;
+    uint32 public constant MAX_TOTAL_RATELIMIT_PER_EPOCH = 1_000_000;
     uint32 public constant MIN_RATELIMIT_PER_MEMBERSHIP = 20;
     uint32 public constant MAX_RATELIMIT_PER_MEMBERSHIP = 600;
     uint32 public constant ACTIVE_DURATION = 180 days;
