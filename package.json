@@ -12,7 +12,7 @@
     "commit-and-tag-version": "^12.2.0"
   },
   "dependencies": {
-    "@zk-kit/imt.sol": "https://gitpkg.vercel.app/privacy-scaling-explorations/zk-kit/packages/imt.sol?0699fd1e5ad3683ae0090e0626f75d7834145500",
+    "@zk-kit/imt.sol": "2.0.0-beta.12",
     "poseidon-solidity": "^0.0.5"
   },
   "keywords": [
