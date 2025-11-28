@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@zk-kit/imt.sol':
-        specifier: https://gitpkg.vercel.app/privacy-scaling-explorations/zk-kit/packages/imt.sol?0699fd1e5ad3683ae0090e0626f75d7834145500
-        version: imt.sol@https://gitpkg.vercel.app/privacy-scaling-explorations/zk-kit/packages/imt.sol?0699fd1e5ad3683ae0090e0626f75d7834145500
+        specifier: github:privacy-scaling-explorations/zk-kit#0699fd1e5ad3683ae0090e0626f75d7834145500&path:packages/imt.sol
+        version: imt.sol@git+https://github.com/privacy-scaling-explorations/zk-kit.git#0699fd1e5ad3683ae0090e0626f75d7834145500&path:packages/imt.sol
       poseidon-solidity:
         specifier: ^0.0.5
         version: 0.0.5
@@ -494,9 +494,8 @@ packages:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
     engines: {node: '>=6'}
 
-  imt.sol@https://gitpkg.vercel.app/privacy-scaling-explorations/zk-kit/packages/imt.sol?0699fd1e5ad3683ae0090e0626f75d7834145500:
-    resolution: {tarball: https://gitpkg.vercel.app/privacy-scaling-explorations/zk-kit/packages/imt.sol?0699fd1e5ad3683ae0090e0626f75d7834145500}
-    name: imt.sol
+  imt.sol@git+https://github.com/privacy-scaling-explorations/zk-kit.git#0699fd1e5ad3683ae0090e0626f75d7834145500&path:packages/imt.sol:
+    resolution: {commit: 0699fd1e5ad3683ae0090e0626f75d7834145500, path: packages/imt.sol, repo: https://github.com/privacy-scaling-explorations/zk-kit.git, type: git}
     version: 0.0.0
 
   indent-string@4.0.0:
@@ -1618,7 +1617,7 @@ snapshots:
       parent-module: 1.0.1
       resolve-from: 4.0.0
 
-  imt.sol@https://gitpkg.vercel.app/privacy-scaling-explorations/zk-kit/packages/imt.sol?0699fd1e5ad3683ae0090e0626f75d7834145500:
+  imt.sol@git+https://github.com/privacy-scaling-explorations/zk-kit.git#0699fd1e5ad3683ae0090e0626f75d7834145500&path:packages/imt.sol:
     dependencies:
       poseidon-solidity: 0.0.5
 
