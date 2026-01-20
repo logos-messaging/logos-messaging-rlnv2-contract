@@ -72,25 +72,27 @@ $ forge coverage
 $ TOKEN_ADDRESS=0x1122334455667788990011223344556677889900 forge script script/Deploy.s.sol --broadcast --rpc-url localhost --tc Deploy
 ```
 
-Replace the `TOKEN_ADDRESS` value by a token address you have deployed on anvil. A `TestToken` is available in
-`test/TestToken.sol` and can be deployed with
+Replace the `TOKEN_ADDRESS` value by a token address you have deployed on anvil. A `TestToken` implementation is
+available in `test/TestStableToken.sol` and can be deployed with a proxy using the following command (use the proxy
+address in the above command):
 
 ```sh
-forge script test/TestToken.sol --broadcast --rpc-url localhost --tc TestTokenFactory
+(ETH_FROM=$ETH_FROM forge script script/DeployTokenWithProxy.s.sol:DeployTokenWithProxy --broadcast -vvvv --rpc-url http://localhost --private-key $PRIVATE_KEY)
 ```
 
 For this script to work, you need to have a `MNEMONIC` environment variable set to a valid
 [BIP39 mnemonic](https://iancoleman.io/bip39/).
 
-#### Deploy to Sepolia:
+#### Deploy to Linea Sepolia:
 
 Ensure that you use the [cast wallet](https://book.getfoundry.sh/reference/cast/cast-wallet) to store private keys that
 will be used in deployments.
 
 ```sh
 $ export RPC_URL=<rpc-url>
+$ export API_KEY_LINEASCAN=<api-key-lineascan>
 $ export ACCOUNT=<account name in foundry keystore>
-$ pnpm deploy:sepolia
+$ pnpm deploy:linea_sepolia
 ```
 
 ### Format
