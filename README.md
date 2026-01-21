@@ -1,4 +1,4 @@
-# waku-rlnv2-contract [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
+# logos-messaging-rlnv2-contract [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
 
 [gha]: https://github.com/waku-org/waku-rlnv2-contract/actions
 [gha-badge]: https://github.com/waku-org/waku-rlnv2-contract/actions/workflows/ci.yml/badge.svg
@@ -7,7 +7,7 @@
 [license]: https://opensource.org/licenses/MIT
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
-Waku's RLNv2 contracts, which include -
+logos-messaging's RLNv2 contracts, which include -
 
 - LazyIMT, which allows the root of the chain to be accessible on-chain.
 
@@ -68,30 +68,47 @@ $ forge coverage
 
 #### Deploy to Anvil:
 
+The following deployment will deploy several contracts required by the Logos Messaging RLNv2 contract and then deploy
+the Logos Messaging RLNv2 implementation contract as well as a proxy contract.
+
 ```sh
 $ TOKEN_ADDRESS=0x1122334455667788990011223344556677889900 forge script script/Deploy.s.sol --broadcast --rpc-url localhost --tc Deploy
 ```
 
-Replace the `TOKEN_ADDRESS` value by a token address you have deployed on anvil. A `TestToken` is available in
-`test/TestToken.sol` and can be deployed with
+Replace the `TOKEN_ADDRESS` value by a token address you have deployed on anvil. A `TestToken` implementation is
+available in `test/TestStableToken.sol` and can be deployed with a proxy using the following command (use the proxy
+address in the above command):
 
 ```sh
-forge script test/TestToken.sol --broadcast --rpc-url localhost --tc TestTokenFactory
+(ETH_FROM=$ETH_FROM forge script script/DeployTokenWithProxy.s.sol:DeployTokenWithProxy --broadcast -vvvv --rpc-url http://localhost --private-key $PRIVATE_KEY)
 ```
 
 For this script to work, you need to have a `MNEMONIC` environment variable set to a valid
 [BIP39 mnemonic](https://iancoleman.io/bip39/).
 
-#### Deploy to Sepolia:
+#### Deploy to Linea Sepolia:
 
 Ensure that you use the [cast wallet](https://book.getfoundry.sh/reference/cast/cast-wallet) to store private keys that
 will be used in deployments.
 
 ```sh
+$ export ETH_FROM=<your-wallet-address>
+$ export TOKEN_ADDRESS=<token-address>
 $ export RPC_URL=<rpc-url>
-$ export ACCOUNT=<account name in foundry keystore>
-$ pnpm deploy:sepolia
+$ export API_KEY_LINEASCAN=<api-key-lineascan>
+$ export API_KEY_ETHERSCAN=123 #(dummy value)
+$ export API_KEY_CARDONA=123 #(dummy value)
+$ export ACCOUNT=<account name in cast wallet>
+$ pnpm deploy:linea_sepolia
 ```
+
+This should deploy the following contracts:
+
+- PoseidonT3: used by the logos-messaging-rlnv2-contract to generate the cryptographic commitments stored in the merkle
+  tree
+- LinearPriceCalculator: calculator used by logos-messaging-rlnv2-contract to determine the price of a membership
+- WakuRlnV2: the implementation contract
+- WakuRlnV2 Proxy: the proxy contract pointing to the implementation contract
 
 ### Format
 
