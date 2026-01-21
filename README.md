@@ -68,6 +68,10 @@ $ forge coverage
 
 #### Deploy to Anvil:
 
+The following deployment will deploy several contracts required by the Waku RLNv2 contract and then deploy the Waku RLNv2
+contract itself as well as a proxy contract.
+
+
 ```sh
 $ TOKEN_ADDRESS=0x1122334455667788990011223344556677889900 forge script script/Deploy.s.sol --broadcast --rpc-url localhost --tc Deploy
 ```
@@ -94,6 +98,12 @@ $ export API_KEY_LINEASCAN=<api-key-lineascan>
 $ export ACCOUNT=<account name in foundry keystore>
 $ pnpm deploy:linea_sepolia
 ```
+
+This should deploy the following contracts:
+- PoseidonT3
+- LinearPriceCalculator
+- WakuRlnV2
+- WakuRlnV2 Proxy
 
 ### Format
 
