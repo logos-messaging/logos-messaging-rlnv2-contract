@@ -1,4 +1,4 @@
-# waku-rlnv2-contract [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
+# logos-messaging-rlnv2-contract [![Github Actions][gha-badge]][gha] [![Foundry][foundry-badge]][foundry] [![License: MIT][license-badge]][license]
 
 [gha]: https://github.com/waku-org/waku-rlnv2-contract/actions
 [gha-badge]: https://github.com/waku-org/waku-rlnv2-contract/actions/workflows/ci.yml/badge.svg
@@ -7,7 +7,7 @@
 [license]: https://opensource.org/licenses/MIT
 [license-badge]: https://img.shields.io/badge/License-MIT-blue.svg
 
-Waku's RLNv2 contracts, which include -
+logos-messaging's RLNv2 contracts, which include -
 
 - LazyIMT, which allows the root of the chain to be accessible on-chain.
 
@@ -68,8 +68,8 @@ $ forge coverage
 
 #### Deploy to Anvil:
 
-The following deployment will deploy several contracts required by the Waku RLNv2 contract and then deploy the Waku
-RLNv2 contract itself as well as a proxy contract.
+The following deployment will deploy several contracts required by the Logos Messaging RLNv2 contract and then deploy
+the Logos Messaging RLNv2 implementation contract as well as a proxy contract.
 
 ```sh
 $ TOKEN_ADDRESS=0x1122334455667788990011223344556677889900 forge script script/Deploy.s.sol --broadcast --rpc-url localhost --tc Deploy
@@ -92,18 +92,23 @@ Ensure that you use the [cast wallet](https://book.getfoundry.sh/reference/cast/
 will be used in deployments.
 
 ```sh
+$ export ETH_FROM=<your-wallet-address>
+$ export TOKEN_ADDRESS=<token-address>
 $ export RPC_URL=<rpc-url>
 $ export API_KEY_LINEASCAN=<api-key-lineascan>
-$ export ACCOUNT=<account name in foundry keystore>
+$ export API_KEY_ETHERSCAN=123 #(dummy value)
+$ export API_KEY_CARDONA=123 #(dummy value)
+$ export ACCOUNT=<account name in cast wallet>
 $ pnpm deploy:linea_sepolia
 ```
 
 This should deploy the following contracts:
 
-- PoseidonT3
-- LinearPriceCalculator
-- WakuRlnV2
-- WakuRlnV2 Proxy
+- PoseidonT3: used by the logos-messaging-rlnv2-contract to generate the cryptographic commitments stored in the merkle
+  tree
+- LinearPriceCalculator: calculator used by logos-messaging-rlnv2-contract to determine the price of a membership
+- WakuRlnV2: the implementation contract
+- WakuRlnV2 Proxy: the proxy contract pointing to the implementation contract
 
 ### Format
 
